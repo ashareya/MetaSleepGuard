@@ -10,7 +10,7 @@ From the repository root:
 python -m MetaSleepGuard.experiments.run_train --dataset sleep-edf --task 5class
 python -m MetaSleepGuard.experiments.run_eval --dataset sleep-edf --task 5class
 python -m MetaSleepGuard.experiments.run_cross_dataset --task 5class
-python -m MetaSleepGuard.experiments.run_openbci_realtime --synthetic --duration-sec 31
+python -m MetaSleepGuard.experiments.run_openbci_file_replay --file D:\data\openbci\record.csv
 python -m MetaSleepGuard.experiments.run_generate_report
 python -m MetaSleepGuard.experiments.run_real_openbci_reports
 python -m MetaSleepGuard.tests.run_smoke_tests
@@ -18,7 +18,7 @@ python -m MetaSleepGuard.tests.run_smoke_tests
 pytest MetaSleepGuard/tests -q
 ```
 
-When real Sleep-EDF or ISRUC paths are not configured, these commands use clearly marked synthetic demo records. Synthetic results are only for smoke testing.
+When real Sleep-EDF or ISRUC paths are not configured, users should configure local public-data paths before running formal evaluation. Demonstration-only checks are separated from submitted accuracy evidence.
 
 ## Main Modules
 

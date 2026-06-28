@@ -6,7 +6,7 @@
 4. Run synthetic OpenBCI real-time mode:
 
 ```powershell
-python -m MetaSleepGuard.experiments.run_openbci_realtime --synthetic --duration-sec 31
+python -m MetaSleepGuard.experiments.run_openbci_file_replay --file D:\data\openbci\record.csv
 ```
 
 5. Show Brainstim calibration dry run:

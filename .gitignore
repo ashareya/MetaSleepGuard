@@ -1,4 +1,4 @@
-﻿.venv/
+.venv/
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
@@ -17,7 +17,5 @@ tmp/
 
 .DS_Store
 Thumbs.db
-
 *.bak
-
 README_before_competition_polish.md
