@@ -1,0 +1,4 @@
+-r requirements.txt
+brainflow>=5.12
+metabci>=0.2.0
+pylsl>=1.16

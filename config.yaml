@@ -1,0 +1,32 @@
+project:
+  name: MetaSleep-Guard
+  license: GPL-2.0
+  metabci_note: 保留 MetaBCI 相关许可证说明；本项目新增代码按 GPL-2.0 组织。
+
+paths:
+  sleep_edf_root: datasets/public_sleep/Sleep-EDF
+  isruc_root: datasets/public_sleep/ISRUC-Sleep
+  boruikang_root: datasets/boruikang_files
+  openbci_raw_root: datasets/openbci_raw
+  output_dir: _codex_tmp/metasleepguard_outputs
+
+signal:
+  target_sfreq: 250
+  epoch_sec: 30
+  bandpass: [0.3, 35.0]
+  alternate_bandpass: [0.5, 45.0]
+  notch_hz: 50
+  default_channels: [Ch2, Ch7]
+
+model:
+  baseline: xgboost
+  fallback: sklearn_random_forest
+  context_history_epochs: 2
+  confidence_threshold: 0.55
+  uncertain_quality_threshold: 0.70
+
+openbci:
+  board: CYTON_BOARD
+  default_channel_indices_zero_based: [1, 6]
+  default_sfreq: 250
+

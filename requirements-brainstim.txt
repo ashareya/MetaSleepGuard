@@ -1,0 +1,4 @@
+metabci>=0.2.0
+psychopy>=2024.1
+pylsl>=1.16
+PyYAML>=6.0

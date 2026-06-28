@@ -1,0 +1,20 @@
+SPDX-License-Identifier: GPL-2.0-only
+
+MetaSleep-Guard
+Copyright (C) 2026 MetaSleep-Guard contributors
+
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation; version 2 of the License.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program in the `COPYING` file. The official text is also available at
+<https://www.gnu.org/licenses/old-licenses/gpl-2.0.html>.
+
+MetaBCI, BrainFlow, MNE, Sleep-EDF, ISRUC-Sleep, PsychoPy, and other third-party
+components and datasets retain their respective licenses and terms. See
+THIRD_PARTY_NOTICES.md.
