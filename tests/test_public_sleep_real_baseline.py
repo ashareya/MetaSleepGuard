@@ -77,7 +77,7 @@ def test_real_metrics_json_schema_is_complete():
 
 def _manifest_fixture(tmp_path: Path):
     repo = tmp_path / "repo"
-    metrics_dir = repo / "_codex_tmp" / "metasleepguard_outputs" / "metrics"
+    metrics_dir = repo / "outputs" / "metasleepguard_outputs" / "metrics"
     metrics_dir.mkdir(parents=True)
     (metrics_dir / "synthetic.json").write_text(
         '{"metadata":{"synthetic_demo":true}}',

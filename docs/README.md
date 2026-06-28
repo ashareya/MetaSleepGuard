@@ -40,8 +40,8 @@ python -m MetaSleepGuard.experiments.run_prepare_data --dataset isruc --root D:\
 python -m MetaSleepGuard.experiments.run_train --dataset sleep-edf --root D:\data\SleepEDF --task 5class
 python -m MetaSleepGuard.experiments.run_cross_dataset --sleep-edf-root D:\data\SleepEDF --isruc-root D:\data\ISRUC --task 5class
 python -m MetaSleepGuard.experiments.run_bdf_fif_audit --input-dir D:\data\boruikang
-python -m MetaSleepGuard.experiments.run_openbci_file_replay --file D:\data\openbci\record.csv --model _codex_tmp\metasleepguard_outputs\models\sleep-edf_5class_baseline.joblib
-python -m MetaSleepGuard.experiments.run_openbci_realtime --serial-port COM3 --model _codex_tmp\metasleepguard_outputs\models\sleep-edf_5class_baseline.joblib
+python -m MetaSleepGuard.experiments.run_openbci_file_replay --file D:\data\openbci\record.csv --model outputs\metasleepguard_outputs\models\sleep-edf_5class_baseline.joblib
+python -m MetaSleepGuard.experiments.run_openbci_realtime --serial-port COM3 --model outputs\metasleepguard_outputs\models\sleep-edf_5class_baseline.joblib
 ```
 
 ## License

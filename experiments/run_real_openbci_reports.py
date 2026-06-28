@@ -17,7 +17,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--output-root",
-        default=str(repo_root() / "_codex_tmp" / "metasleepguard_outputs" / "real_openbci_reports"),
+        default=str(repo_root() / "outputs" / "metasleepguard_outputs" / "real_openbci_reports"),
     )
     args = parser.parse_args()
     results = generate_real_openbci_reports(args.logs_root, args.output_root)

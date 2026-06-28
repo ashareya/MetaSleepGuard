@@ -36,7 +36,7 @@ def load_config(path: str | Path | None = None) -> dict:
 def output_dir(config: dict | None = None) -> Path:
     config = config or load_config()
     configured = config.get("paths", {}).get("output_dir") if isinstance(config.get("paths"), dict) else None
-    return (repo_root() / configured).resolve() if configured else (repo_root() / "_codex_tmp" / "metasleepguard_outputs").resolve()
+    return (repo_root() / configured).resolve() if configured else (repo_root() / "outputs" / "metasleepguard_outputs").resolve()
 
 
 def create_run_dir(category: str) -> Path:

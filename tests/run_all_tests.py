@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 def main() -> None:
     tests_root = Path(__file__).resolve().parent
     repo_root = tests_root.parents[1]
-    temp_root = repo_root / "_codex_tmp" / "test_harness"
+    temp_root = repo_root / "outputs" / "test_harness"
     temp_root.mkdir(parents=True, exist_ok=True)
     passed = 0
     failures: list[str] = []
@@ -45,7 +45,7 @@ def main() -> None:
                 print(f"FAIL {test_id}")
                 traceback.print_exc()
     print(f"test_result passed={passed} failed={len(failures)}")
-    result_path = repo_root / "_codex_tmp" / "metasleepguard_outputs" / "test_results.json"
+    result_path = repo_root / "outputs" / "metasleepguard_outputs" / "test_results.json"
     result_path.parent.mkdir(parents=True, exist_ok=True)
     result_path.write_text(
         json.dumps(

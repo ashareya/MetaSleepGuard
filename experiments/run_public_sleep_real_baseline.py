@@ -41,7 +41,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--output-root",
-        default=str(repo_root() / "_codex_tmp/metasleepguard_outputs/public_sleep_real_baseline"),
+        default=str(repo_root() / "outputs/metasleepguard_outputs/public_sleep_real_baseline"),
     )
     parser.add_argument("--subjects", type=int, default=5)
     parser.add_argument("--recording", type=int, default=1, choices=[1, 2])

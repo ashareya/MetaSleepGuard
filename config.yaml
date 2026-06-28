@@ -8,7 +8,7 @@ paths:
   isruc_root: datasets/public_sleep/ISRUC-Sleep
   boruikang_root: datasets/boruikang_files
   openbci_raw_root: datasets/openbci_raw
-  output_dir: _codex_tmp/metasleepguard_outputs
+  output_dir: outputs/metasleepguard_outputs
 
 signal:
   target_sfreq: 250
