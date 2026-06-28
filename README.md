@@ -5,7 +5,7 @@ MetaBCI ecosystem: Brainda-compatible public-data modeling, BrainFlow/OpenBCI
 acquisition, and Brainstim calibration tasks.
 
 The implementation includes Sleep-EDF and ISRUC-Sleep adapters, leakage-safe
-subject splits, causal context features, XGBoost-compatible baselines, signal
+subject splits, causal context features, RandomForest small-sample baselines, signal
 quality rules, calibrated active rejection, file replay, live Cyton streaming,
 visualization, and HTML reports.
 
@@ -18,10 +18,10 @@ python -m MetaSleepGuard.tests.run_smoke_tests
 Or use the unified PowerShell launcher:
 
 ```powershell
-.\MetaSleepGuard\run.ps1 -Task test
-.\MetaSleepGuard\run.ps1 -Task status
+.\run.ps1 -Task test
+.\run.ps1 -Task status
 .\run.ps1 -Task real-openbci-report
-.\MetaSleepGuard\run.ps1 -Task train -Dataset sleep-edf -ClassificationTask 5class
+.\run.ps1 -Task train -Dataset sleep-edf -ClassificationTask 5class
 ```
 
 ## Main Commands
@@ -43,3 +43,8 @@ directory under `_codex_tmp/metasleepguard_outputs/`. Synthetic runs are marked
 as `synthetic_demo=True` in terminal output and metric metadata.
 
 See [docs/README.md](docs/README.md) for setup and complete command examples.
+
+## Submitted evaluation note
+
+The submitted public Sleep-EDF metrics are based on a 5-subject, one-night-per-subject RandomForest small-sample baseline with GroupKFold subject-level split. The real OpenBCI data are used for acquisition, file replay, 30-second window integrity, signal quality auditing, trusted abstention, and automatic report validation. The OpenBCI data are not used as sleep-staging accuracy evidence.
+
