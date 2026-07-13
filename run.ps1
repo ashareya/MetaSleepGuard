@@ -3,7 +3,7 @@ param(
         "status", "prepare", "train", "evaluate", "cross", "audit", "replay", "realtime", "brainstim",
         "real-openbci-report", "openbci-file-replay", "submission-pack", "metrics-export", "demo-assets",
         "public-sleep-baseline", "public-sleep-eval", "cross-dataset-eval", "public-sleep-real-baseline",
-        "report", "test"
+        "metabci-integration-test", "report", "test"
     )]
     [string]$Task = "test",
     [ValidateSet("sleep-edf", "isruc")]
@@ -117,6 +117,7 @@ try {
             if ($DataRoot) { $args += @("--data-root", $DataRoot) }
             & $Python @args
         }
+        "metabci-integration-test" { & $Python -m MetaSleepGuard.experiments.run_metabci_integration_test }
         "report" { & $Python -m MetaSleepGuard.experiments.run_generate_report }
         "test" { & $Python -m MetaSleepGuard.tests.run_all_tests }
     }

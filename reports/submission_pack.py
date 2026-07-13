@@ -10,6 +10,7 @@ from typing import Iterable
 
 
 TASKS = [
+    ("metabci-integration-test", "direct run", "MetaBCI core import and adapter smoke", "metabci env", "no", "no", "yes"),
     ("status", "直接运行", "MetaBCI 组件发现", "无", "否", "否", "是"),
     ("test", "直接运行", "完整代码测试；含 synthetic smoke", "无", "部分", "否", "是"),
     ("real-openbci-report", "直接运行", "两份真实 OpenBCI 报告", "真实日志目录", "否", "是", "是"),
@@ -71,6 +72,7 @@ def _commands() -> str:
 # 本机 PowerShell 策略要求使用 ExecutionPolicy Bypass；metabci 为分析环境
 $py = "C:\Users\ZYH\anaconda3\envs\metabci\python.exe"
 powershell -NoProfile -ExecutionPolicy Bypass -File .\run.ps1 -Task status -Python $py
+powershell -NoProfile -ExecutionPolicy Bypass -File .\run.ps1 -Task metabci-integration-test -Python $py
 powershell -NoProfile -ExecutionPolicy Bypass -File .\run.ps1 -Task test -Python $py
 powershell -NoProfile -ExecutionPolicy Bypass -File .\run.ps1 -Task real-openbci-report -Python $py
 powershell -NoProfile -ExecutionPolicy Bypass -File .\run.ps1 -Task openbci-file-replay -Python $py
