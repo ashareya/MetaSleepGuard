@@ -1,57 +1,90 @@
 # MetaBCI Core Usage Explanation
 
-原版本主要调用底层依赖库；修订后已补充 MetaBCI 核心框架集成层，并在代码与测试命令中体现 MetaBCI 基础功能调用。
+MetaSleep-Guard contains a dedicated `metabci_integration/` layer. The integration layer probes and calls APIs that are present in the actual local MetaBCI installation; it does not create nonexistent MetaBCI interfaces.
 
-## What Changed
+## Dual-Environment Runtime
 
-MetaSleep-Guard now has a dedicated `MetaSleepGuard/metabci_integration/` layer. This layer does not invent or fake MetaBCI APIs. It probes the actual local Python environment and only reports modules that are really importable.
+### Analysis environment
 
-Local probe result in `C:\Users\ZYH\anaconda3\envs\metabci\python.exe`:
+Python：
 
-- `metabci`: importable.
-- `metabci.brainflow`: importable.
-- `metabci.brainda`: importable.
-- `metabci.brainstim`: package files are present, but import currently fails because `psychopy` is not installed in this analysis environment.
+    C:\Users\ZYH\anaconda3\envs\metabci\python.exe
+
+Verified components：
+
+- `metabci`
+- `metabci.brainflow`
+- `metabci.brainda`
+
+Responsibilities：
+
+- OpenBCI acquisition-chain alignment
+- OpenBCI file replay
+- Sleep-EDF processing
+- subject-level model evaluation
+- quality auditing
+- trusted abstention
+- report generation
+- automated tests
+
+### Brainstim environment
+
+Python：
+
+    C:\Users\ZYH\anaconda3\envs\metabci_stim\python.exe
+
+Verified components：
+
+- `psychopy`
+- `metabci.brainstim`
+- Brainstim dry-run calibration
+
+Responsibilities：
+
+- visual stimulus presentation
+- calibration paradigms
+- experiment prompts
+- countdown
+- LSL markers
+- event logs
+
+The separation is intentional. PsychoPy remains in the stimulus environment to avoid destabilizing the analysis environment and its MNE, public sleep-data, and evaluation dependencies.
 
 ## BrainFlow Usage
 
-The project uses MetaBCI/BrainFlow to align OpenBCI acquisition and file replay:
-
-- Real-time OpenBCI/Cyton and file replay remain in `realtime/`.
-- The new adapter imports `metabci.brainflow`, `metabci.brainflow.amplifiers`, `metabci.brainflow.workers`, and `metabci.brainflow.logger`.
-- The integration test exercises `metabci.brainflow.amplifiers.RingBuffer` as a lightweight MetaBCI BrainFlow base function.
-
-## Brainstim Usage
-
-The project uses the MetaBCI/Brainstim platform boundary for calibration paradigms, prompts, event markers, and LSL marker logging:
-
-- The adapter probes `metabci.brainstim` and records the current `psychopy` import blocker.
-- The project Brainstim task still runs a dry-run marker smoke test through `MetaSleepGuard.brainstim_task.calibration_task.run_calibration_task`.
-- If the runtime is switched to an environment with PsychoPy installed, the same adapter can report Brainstim as importable.
+The BrainFlow adapter imports MetaBCI BrainFlow modules and exercises `metabci.brainflow.amplifiers.RingBuffer`. It connects the MetaBCI framework boundary to OpenBCI Cyton acquisition and OpenBCI GUI file replay.
 
 ## Brainda Usage
 
-The project uses MetaBCI/Brainda concepts and available interfaces for public sleep-data processing and evaluation:
+The Brainda adapter imports MetaBCI Brainda modules and calls `EnhancedLeaveOneGroupOut` to verify subject-level separation between training and testing data.
 
-- Sleep-EDF/ISRUC loaders remain project-specific because this local MetaBCI install does not expose dedicated sleep-staging datasets.
-- The adapter imports `metabci.brainda.datasets`, `metabci.brainda.paradigms`, `metabci.brainda.algorithms.feature_analysis.freq_analysis`, and `metabci.brainda.algorithms.utils.model_selection`.
-- The integration test calls `EnhancedLeaveOneGroupOut` to verify subject-level no-overlap split behavior.
+## Brainstim Usage
 
-## Project Additions
+The Brainstim adapter is verified in the `metabci_stim` environment. The environment imports `metabci.brainstim` and PsychoPy, and the project Brainstim dry-run calibration completes successfully.
 
-On top of MetaBCI base functions, MetaSleep-Guard adds:
+## Project Extensions
 
-- Sleep quality audit.
-- 30-second window integrity checks.
-- Trusted rejection / abstention for low-quality or low-confidence windows.
-- Automatic HTML, Markdown, CSV, JSON, and figure reports.
-- Real OpenBCI report generation and Sleep-EDF small-sample baseline evidence.
+On top of MetaBCI base functions, the project adds：
 
-## Required Verification Command
+- sleep signal-quality auditing
+- 30-second window-integrity checks
+- trusted rejection for unusable windows
+- real OpenBCI quality reports
+- Sleep-EDF baseline reports
+- HTML, Markdown, CSV, JSON, and figure exports
 
-```powershell
-$py = "C:\Users\ZYH\anaconda3\envs\metabci\python.exe"
-.\run.ps1 -Task metabci-integration-test -Python $py
-```
+## Verification
 
-Expected output includes MetaBCI core import success, BrainFlow adapter success, Brainda adapter success, Brainstim import availability, and Brainstim marker-log smoke success.
+Analysis environment：
+
+    $py = "C:\Users\ZYH\anaconda3\envs\metabci\python.exe"
+
+    .\run.ps1 -Task status -Python $py
+    .\run.ps1 -Task test -Python $py
+    .\run.ps1 -Task metabci-integration-test -Python $py
+
+Brainstim environment：
+
+    $stimPy = "C:\Users\ZYH\anaconda3\envs\metabci_stim\python.exe"
+
+    .\run.ps1 -Task brainstim -Synthetic -Python $stimPy

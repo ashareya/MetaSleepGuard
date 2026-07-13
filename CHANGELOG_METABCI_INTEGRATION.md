@@ -24,3 +24,10 @@
 - Sleep-EDF small-sample public baseline is preserved.
 - Quality audit, 30-second window integrity, trusted rejection, and automatic report modules are preserved.
 - Existing tests remain routed through `.\run.ps1 -Task test -Python $py`.
+
+## Dual-Environment Runtime
+
+- Documented the separate `metabci` analysis environment.
+- Documented the separate `metabci_stim` Brainstim/PsychoPy environment.
+- Added verified Brainstim import and dry-run commands.
+- Added `DUAL_ENVIRONMENT_GUIDE.md`.

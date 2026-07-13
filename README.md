@@ -1,68 +1,104 @@
 # MetaSleep-Guard
 
-MetaSleep-Guard is a two-channel trusted sleep-staging and signal-quality auditing system built on the MetaBCI core framework. The project is now organized around explicit MetaBCI BrainFlow, Brainstim, and Brainda integration layers, not only around direct calls to BrainFlow, sklearn, MNE, or other lower-level dependencies.
+MetaSleep-Guard is a two-channel trusted sleep-staging and signal-quality auditing system built on the MetaBCI core framework.
 
-本项目基于 MetaBCI 的 BrainFlow、Brainstim、Brainda 子平台能力构建：
+本项目基于 MetaBCI 的 BrainFlow、Brainstim 和 Brainda 子平台能力构建，并通过独立集成层将 MetaBCI 基础功能与双导睡眠监测应用连接起来。
 
-- 使用 MetaBCI/BrainFlow 完成 OpenBCI 数据接入、文件回放、在线缓存和 30 秒窗口运行链路对齐。代码实际导入 `metabci.brainflow`，并在集成测试中调用 `metabci.brainflow.amplifiers.RingBuffer`。
-- 使用 MetaBCI/Brainstim 完成标定流程、刺激提示、事件标记和 LSL marker 对齐。当前 `metabci` 分析环境中 `metabci.brainstim` 因缺少 `psychopy` 无法直接导入，集成层会记录真实错误，并运行项目 Brainstim 标定 marker 日志 smoke；在安装 PsychoPy 的 stim 环境中可启用图形刺激任务。
-- 使用 MetaBCI/Brainda 思路和可用接口完成公开睡眠数据处理、被试级划分和模型评估。代码实际导入 `metabci.brainda`，并在集成测试中调用 `metabci.brainda.algorithms.utils.model_selection.EnhancedLeaveOneGroupOut` 做被试级划分检查。
-- 在 MetaBCI 基础能力之上，本项目新增睡眠质量审计、30 秒窗口完整性、可信拒识和自动报告模块。
+## MetaBCI Core Usage
 
-## Repository
+- **MetaBCI / BrainFlow**：用于 OpenBCI Cyton 数据接入、OpenBCI GUI 文件回放、在线缓存和 30 秒窗口运行链路。集成测试实际导入 `metabci.brainflow`，并调用 `metabci.brainflow.amplifiers.RingBuffer`。
+- **MetaBCI / Brainda**：用于公开睡眠数据处理流程、被试级划分检查和模型评价组织。集成测试实际导入 `metabci.brainda`，并调用 `EnhancedLeaveOneGroupOut` 检查训练集和测试集被试无重叠。
+- **MetaBCI / Brainstim**：用于刺激提示、倒计时、标定范式、事件标记和 LSL marker。Brainstim 图形功能在独立的 `metabci_stim` 环境中运行。
+- **项目新增功能**：睡眠信号质量审计、30 秒窗口完整性统计、可信拒识、真实 OpenBCI 报告和自动化指标报告。
 
-This repository contains the source code, environment configuration, test scripts, report-generation modules, quality-audit modules, MetaBCI integration adapters, and evaluation workflows used for the MetaBCI Innovation Application Competition preliminary submission.
+## Dual-Environment Design
 
-## Environment
+本项目采用两个相互隔离的 conda 环境，不将 PsychoPy 强行安装到分析环境中。
 
-Recommended environment:
+### 1. Analysis environment
 
-- Windows 11
-- Python / conda environment: `metabci`
-- Python executable used for verification: `C:\Users\ZYH\anaconda3\envs\metabci\python.exe`
-- MetaBCI components checked at runtime: `metabci`, `metabci.brainflow`, `metabci.brainda`, `metabci.brainstim`
-- OpenBCI Cyton data input and OpenBCI GUI TXT file replay
+用途：
 
-## Smoke Test
+- MetaBCI BrainFlow 和 Brainda 集成
+- Sleep-EDF 数据处理
+- 模型训练与评估
+- OpenBCI 文件回放
+- 信号质量审计
+- 可信拒识
+- 报告生成
+- 单元测试和集成测试
 
-Run the following command in the project root directory:
+Python：
 
-```powershell
-python -m MetaSleepGuard.tests.run_smoke_tests
-```
+    C:\Users\ZYH\anaconda3\envs\metabci\python.exe
 
-Or use the unified PowerShell launcher:
+已验证：
 
-```powershell
-$py = "C:\Users\ZYH\anaconda3\envs\metabci\python.exe"
-.\run.ps1 -Task status -Python $py
-.\run.ps1 -Task test -Python $py
-.\run.ps1 -Task metabci-integration-test -Python $py
-.\run.ps1 -Task real-openbci-report -Python $py
-.\run.ps1 -Task public-sleep-real-baseline -Python $py
-```
+- `metabci` 可导入
+- `metabci.brainflow` 可导入
+- `metabci.brainda` 可导入
+- 46 项测试通过
 
-`.\run.ps1 -Task metabci-integration-test -Python $py` will import MetaBCI core and available submodules, exercise MetaBCI BrainFlow and Brainda base functionality, and print Brainstim availability plus marker-log smoke results.
+### 2. Brainstim environment
+
+用途：
+
+- MetaBCI Brainstim
+- PsychoPy 图形刺激
+- 标定范式
+- 实验提示与倒计时
+- 事件标记和 marker 日志
+
+Python：
+
+    C:\Users\ZYH\anaconda3\envs\metabci_stim\python.exe
+
+已验证：
+
+- `psychopy` 可导入
+- `metabci.brainstim` 可导入
+- Brainstim dry-run 标定流程通过
+
+双环境分工是有意的工程设计。PsychoPy 及其图形依赖较重，单独使用刺激环境可以避免影响 MNE、Sleep-EDF 数据处理和既有分析测试环境的稳定性。
+
+完整说明见 `DUAL_ENVIRONMENT_GUIDE.md`。
+
+## Verification Commands
+
+在项目根目录运行：
+
+    $py = "C:\Users\ZYH\anaconda3\envs\metabci\python.exe"
+    $stimPy = "C:\Users\ZYH\anaconda3\envs\metabci_stim\python.exe"
+
+    .\run.ps1 -Task status -Python $py
+    .\run.ps1 -Task test -Python $py
+    .\run.ps1 -Task metabci-integration-test -Python $py
+
+    .\run.ps1 -Task brainstim -Synthetic -Python $stimPy
 
 ## Main Commands
 
-```powershell
-.\run.ps1 -Task status -Python $py
-.\run.ps1 -Task test -Python $py
-.\run.ps1 -Task metabci-integration-test -Python $py
-.\run.ps1 -Task real-openbci-report -Python $py
-.\run.ps1 -Task openbci-file-replay -Python $py
-.\run.ps1 -Task public-sleep-real-baseline -Python $py
-.\run.ps1 -Task metrics-export -Python $py
-.\run.ps1 -Task submission-pack -Python $py
-.\run.ps1 -Task demo-assets -Python $py
-```
+    .\run.ps1 -Task status -Python $py
+    .\run.ps1 -Task test -Python $py
+    .\run.ps1 -Task metabci-integration-test -Python $py
+    .\run.ps1 -Task real-openbci-report -Python $py
+    .\run.ps1 -Task openbci-file-replay -Python $py
+    .\run.ps1 -Task public-sleep-real-baseline -Python $py
+    .\run.ps1 -Task metrics-export -Python $py
+    .\run.ps1 -Task submission-pack -Python $py
+    .\run.ps1 -Task demo-assets -Python $py
+    .\run.ps1 -Task brainstim -Synthetic -Python $stimPy
 
-## Evaluation Note
+## Evaluation Evidence
 
-The submitted public Sleep-EDF metrics are based on a 5-subject, one-night-per-subject RandomForest small-sample baseline with subject-level splits.
+The submitted Sleep-EDF metrics are based on five subjects, one night per subject, and subject-level evaluation splits.
 
-The real OpenBCI data are used for MetaBCI/BrainFlow acquisition-chain validation, file replay, 30-second window integrity analysis, signal-quality auditing, trusted abstention, and automatic report validation. The OpenBCI data are not used as sleep-staging accuracy evidence.
+- Three-class Accuracy: 0.826028
+- Five-class Accuracy: 0.746121
+- Real OpenBCI 10-minute coverage: 0.993948
+- Real OpenBCI 60-minute coverage: 0.973399
+
+Public expert-labeled Sleep-EDF data are used for sleep-staging performance evaluation. Real OpenBCI data are used for acquisition-chain validation, file replay, window-integrity analysis, quality auditing, trusted abstention, and automatic report validation. OpenBCI data are not used as sleep-staging accuracy evidence.
 
 ## License
 
