@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "metabci-sleep"
+version = "0.2.0"
+description = "MetaBCI-compatible sleep staging, quality auditing, and trusted rejection extensions."
+readme = "METABCI_SLEEP_EXTENSION.md"
+requires-python = ">=3.10"
+license = { text = "GPL-2.0-only" }
+authors = [{ name = "MetaSleep-Guard contributors" }]
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.0",
+    "mne>=1.5",
+    "metabci>=0.2.0",
+]
+
+[project.optional-dependencies]
+full = [
+    "scipy>=1.11",
+    "scikit-learn>=1.3",
+    "joblib>=1.3",
+    "matplotlib>=3.8",
+    "PyYAML>=6.0",
+]
+test = ["pytest>=8.0"]
+
+[tool.setuptools]
+include-package-data = true
+packages = [
+    "MetaSleepGuard",
+    "MetaSleepGuard.brainstim_task",
+    "MetaSleepGuard.datasets",
+    "MetaSleepGuard.datasets.public_sleep",
+    "MetaSleepGuard.experiments",
+    "MetaSleepGuard.features",
+    "MetaSleepGuard.metabci_integration",
+    "MetaSleepGuard.models",
+    "MetaSleepGuard.preprocessing",
+    "MetaSleepGuard.quality",
+    "MetaSleepGuard.realtime",
+    "MetaSleepGuard.rejection",
+    "MetaSleepGuard.reports",
+    "MetaSleepGuard.tests",
+    "MetaSleepGuard.visualization",
+    "metabci_sleep",
+    "metabci_sleep.datasets",
+    "metabci_sleep.paradigms",
+    "metabci_sleep.algorithms",
+    "metabci_sleep.realtime",
+    "metabci_sleep.reporting",
+    "metabci_sleep.brainstim",
+]
+
+[tool.setuptools.package-dir]
+MetaSleepGuard = "."
+metabci_sleep = "metabci_sleep"

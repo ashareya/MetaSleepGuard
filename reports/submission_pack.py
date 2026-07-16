@@ -393,7 +393,7 @@ def _test_document(ten: dict, sixty: dict, test_result: dict, public_summary: di
         dataset_status = "新增 Sleep-EDF 与 ISRUC-Sleep 接口；当前仅接口与 synthetic smoke 完成，正式数据指标待补。"
     return f"""# 项目测试说明文档素材
 
-待填写：GitHub/Gitee 仓库链接
+仓库链接见项目 README
 
 ## 项目技术路径
 
