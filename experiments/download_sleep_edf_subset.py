@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import hashlib
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import tempfile
 import time
@@ -24,11 +25,15 @@ def main() -> None:
     parser.add_argument("--subjects", type=int, default=15)
     parser.add_argument("--recording", type=int, default=1, choices=(1, 2))
     parser.add_argument("--chunks-per-file", type=int, default=8)
-    parser.add_argument("--workers", type=int, default=32)
+    parser.add_argument("--workers", type=int, default=3)
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL)
     args = parser.parse_args()
     if args.subjects < 1:
         raise SystemExit("--subjects must be positive")
+    if args.chunks_per_file < 1 or args.chunks_per_file > 16:
+        raise SystemExit("--chunks-per-file must be between 1 and 16")
+    if args.workers < 1 or args.workers > 8:
+        raise SystemExit("--workers must be between 1 and 8")
     records = _official_records(list(range(args.subjects)), args.recording)
     destination = Path(args.data_root).resolve() / "physionet-sleep-data"
     destination.mkdir(parents=True, exist_ok=True)
@@ -101,10 +106,13 @@ def _download_one(
     chunks_per_file: int,
 ) -> Path:
     url = f"{base_url}/{record['fname']}"
-    response = requests.head(url, timeout=(30, 60))
-    response.raise_for_status()
-    size = int(response.headers["Content-Length"])
-    part_root = Path(tempfile.gettempdir()) / "metasleepguard_sleep_edf_parts" / record["fname"]
+    size = _remote_content_length(url)
+    part_root = (
+        Path(tempfile.gettempdir())
+        / "metasleepguard_sleep_edf_parts"
+        / record["fname"]
+        / f"chunks_{chunks_per_file}_size_{size}"
+    )
     part_root.mkdir(parents=True, exist_ok=True)
     ranges = _byte_ranges(size, chunks_per_file)
     with ThreadPoolExecutor(max_workers=len(ranges)) as pool:
@@ -124,12 +132,17 @@ def _download_one(
         raise RuntimeError(f"Size mismatch for {record['fname']}")
     actual_sha1 = _sha1(temporary_target)
     if actual_sha1 != record["sha"]:
+        temporary_target.unlink(missing_ok=True)
+        for part in part_root.glob("*"):
+            if part.is_file():
+                part.unlink()
         raise RuntimeError(
             f"SHA1 mismatch for {record['fname']}: expected={record['sha']} actual={actual_sha1}"
         )
     os.replace(temporary_target, target)
-    for part in part_root.glob("*.part"):
-        part.unlink()
+    for part in part_root.glob("*"):
+        if part.is_file():
+            part.unlink()
     part_root.rmdir()
     print(f"download_verified={record['fname']} bytes={size}", flush=True)
     return target
@@ -151,9 +164,12 @@ def _download_range(url: str, path: Path, start: int, end: int) -> None:
                 return
             resume_start = start + current_size
             with temporary.open("ab") as output:
+                curl = shutil.which("curl")
+                if curl is None:
+                    raise RuntimeError("curl is required for resumable Sleep-EDF downloads")
                 completed = subprocess.run(
                     [
-                        "curl.exe",
+                        curl,
                         "--fail",
                         "--location",
                         "--silent",
@@ -184,6 +200,23 @@ def _download_range(url: str, path: Path, start: int, end: int) -> None:
             if attempt == 29:
                 raise
             time.sleep(min(2**attempt, 30))
+
+
+def _remote_content_length(url: str) -> int:
+    last_error: Exception | None = None
+    for attempt in range(5):
+        try:
+            response = requests.head(url, timeout=(30, 60), allow_redirects=True)
+            response.raise_for_status()
+            size = int(response.headers["Content-Length"])
+            if size <= 0:
+                raise ValueError("Content-Length must be positive")
+            return size
+        except Exception as exc:
+            last_error = exc
+            if attempt < 4:
+                time.sleep(min(2**attempt, 8))
+    raise RuntimeError(f"Unable to read remote file size for {url}: {last_error}") from last_error
 
 
 def _byte_ranges(size: int, chunks: int) -> list[tuple[int, int]]:

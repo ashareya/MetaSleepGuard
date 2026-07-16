@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 
 def main() -> None:
     tests_root = Path(__file__).resolve().parent
-    repo_root = tests_root.parents[1]
+    repo_root = tests_root.parent
     temp_root = repo_root / "outputs" / "test_harness"
     temp_root.mkdir(parents=True, exist_ok=True)
     passed = 0

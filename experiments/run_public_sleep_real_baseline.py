@@ -37,13 +37,13 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--data-root",
-        default=str(repo_root() / "MetaSleepGuard/data/public_sleep/sleep_edf_raw"),
+        default=str(repo_root() / "data/public_sleep/sleep_edf_raw"),
     )
     parser.add_argument(
         "--output-root",
         default=str(repo_root() / "outputs/metasleepguard_outputs/public_sleep_real_baseline"),
     )
-    parser.add_argument("--subjects", type=int, default=5)
+    parser.add_argument("--subjects", type=int, default=15)
     parser.add_argument("--recording", type=int, default=1, choices=[1, 2])
     parser.add_argument("--no-download", action="store_true")
     args = parser.parse_args()

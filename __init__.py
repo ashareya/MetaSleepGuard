@@ -5,5 +5,4 @@ Brainstim calibration, trusted rejection, visualization, and reporting in one
 reproducible project tree.
 """
 
-__version__ = "0.1.0"
-
+__version__ = "0.2.0"

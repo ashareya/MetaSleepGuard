@@ -1,4 +1,6 @@
 import json
+import subprocess
+import sys
 
 import mne
 import numpy as np
@@ -19,6 +21,22 @@ def test_feature_extractor_causal_context_and_names():
     base = X.shape[1] // 3
     assert np.allclose(X[0, : base * 2], 0)
     assert not np.allclose(X[2, :base], 0)
+
+
+def test_feature_extractor_stream_history_persists_and_resets():
+    from metabci_sleep.algorithms import SleepFeatureExtractor
+
+    rng = np.random.default_rng(9)
+    epochs = rng.normal(size=(2, 2, 120))
+    extractor = SleepFeatureExtractor(4, ["C1", "C2"], context_history=1)
+    first = extractor.transform_stream(epochs[:1], subject_ids=["S1"])
+    second = extractor.transform_stream(epochs[1:], subject_ids=["S1"])
+    base = first.shape[1] // 2
+    assert np.allclose(first[0, :base], 0)
+    assert not np.allclose(second[0, :base], 0)
+    extractor.reset_stream("S1")
+    reset = extractor.transform_stream(epochs[1:], subject_ids=["S1"])
+    assert np.allclose(reset[0, :base], 0)
 
 
 def test_sleep_staging_estimator_fit_predict_and_save(tmp_path):
@@ -83,6 +101,7 @@ def test_window_integrity_and_worker_layouts():
     assert len(rows) == 1
     assert rows[0]["sample_count"] == 300
     assert rows[0]["coverage_ratio"] == 1.0
+    assert rows[0]["quality_grade"] == "A"
 
     worker = OpenBCISleepWorker(sfreq=sfreq, channel_names=["C1", "C2"])
     worker.pre()
@@ -90,6 +109,19 @@ def test_window_integrity_and_worker_layouts():
     assert len(outputs) == 1
     assert outputs[0]["reason"] == "no_model_loaded"
     worker.post()
+
+    incomplete = WindowIntegrityAuditor(sfreq=sfreq).audit(timestamps[:20], signals_uv[:, :20])
+    assert incomplete[0]["quality_grade"] == "D"
+    assert incomplete[0]["trusted_output"] == "暂不判定"
+
+
+def test_worker_import_does_not_leave_log_file(tmp_path):
+    code = (
+        "from metabci_sleep.realtime import OpenBCISleepWorker; "
+        "OpenBCISleepWorker(sfreq=10, channel_names=['C1','C2'])"
+    )
+    subprocess.run([sys.executable, "-c", code], cwd=tmp_path, check=True)
+    assert not (tmp_path / "log.txt").exists()
 
 
 def test_report_builder_and_brainstim_protocol(tmp_path):

@@ -12,6 +12,7 @@ from MetaSleepGuard.preprocessing.label_mapping import map_raw_stage
 from MetaSleepGuard.reports.submission_pack import _manifest_rows
 from MetaSleepGuard.reports.submission_pack import _real_items
 from MetaSleepGuard.experiments.download_sleep_edf_subset import _byte_ranges
+from MetaSleepGuard.experiments.common import output_dir, project_root, repo_root
 from MetaSleepGuard.experiments.run_public_sleep_real_baseline import _limitations, _readme
 
 
@@ -154,3 +155,8 @@ def test_segmented_download_ranges_cover_file_once():
     assert ranges[-1][1] == 100
     assert sum(end - start + 1 for start, end in ranges) == 101
     assert all(left[1] + 1 == right[0] for left, right in zip(ranges, ranges[1:]))
+
+
+def test_repository_and_output_roots_stay_inside_git_workspace():
+    assert repo_root() == project_root()
+    assert output_dir().is_relative_to(repo_root())

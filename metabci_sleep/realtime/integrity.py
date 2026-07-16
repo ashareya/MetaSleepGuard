@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from MetaSleepGuard.realtime.real_openbci_data import audit_real_openbci_window
+from MetaSleepGuard.quality.quality_audit import audit_epoch
 
 
 class WindowIntegrityAuditor:
@@ -47,7 +47,35 @@ class WindowIntegrityAuditor:
             else:
                 covered = 0.0
             coverage = covered / self.epoch_sec
-            quality = audit_real_openbci_window(selected, self.sfreq, coverage, sample_ratio)
+            if selected.shape[1] < 8:
+                flags = ["data_dropout"]
+                grade = "D"
+                score = 30.0
+                reliable = False
+            else:
+                quality_result = audit_epoch(
+                    selected * 1e-6,
+                    self.sfreq,
+                    channel_names=["Ch2", "Ch7"],
+                    start_time=start,
+                    epoch_sec=self.epoch_sec,
+                )
+                flags = list(quality_result.bad_flags)
+                grade = quality_result.quality_grade
+                score = quality_result.quality_score
+                reliable = quality_result.is_reliable
+            if min(coverage, sample_ratio) < 0.8:
+                flags.append("effective_data_ratio_insufficient")
+                grade = "D"
+                score = min(score, 30.0)
+                reliable = False
+            quality = {
+                "quality_grade": grade,
+                "quality_score": score,
+                "quality_flags": "|".join(sorted(set(flags))),
+                "usable_for_window_inference": bool(reliable),
+                "trusted_output": "可进入模型" if reliable else "暂不判定",
+            }
             rows.append(
                 {
                     "window_index": index,

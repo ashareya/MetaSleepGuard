@@ -37,7 +37,7 @@ Python：
 - `metabci` 可导入
 - `metabci.brainflow` 可导入
 - `metabci.brainda` 可导入
-- 46 项测试通过
+- 69 项测试通过
 
 ### 2. Brainstim environment
 

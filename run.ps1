@@ -23,14 +23,15 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$repoRoot = Split-Path -Parent $PSScriptRoot
+$sourceRoot = $PSScriptRoot
+$packageParent = Split-Path -Parent $sourceRoot
 $previousPythonPath = $env:PYTHONPATH
-$sourcePaths = @($PSScriptRoot, $repoRoot)
+$sourcePaths = @($sourceRoot, $packageParent)
 if ($previousPythonPath) {
     $sourcePaths += $previousPythonPath
 }
 $env:PYTHONPATH = $sourcePaths -join [IO.Path]::PathSeparator
-Push-Location $repoRoot
+Push-Location $sourceRoot
 try {
     switch ($Task) {
         "status" { & $Python -m MetaSleepGuard.experiments.run_metabci_status }

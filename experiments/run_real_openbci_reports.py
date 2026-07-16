@@ -12,7 +12,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--logs-root",
-        default=str(repo_root().parent / "metasleepguard_protocol_timer" / "logs"),
+        default=str(repo_root().parents[1] / "metasleepguard_protocol_timer" / "logs"),
         help="Directory containing the SX 10-minute and 60-minute protocol log folders",
     )
     parser.add_argument(

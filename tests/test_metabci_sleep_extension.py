@@ -150,10 +150,27 @@ def test_sleep_edf_returns_standard_nested_raw_and_expands_annotations(tmp_path)
             return_value=annotations,
         ),
     ):
-        dataset = SleepEDF(tmp_path)
+        dataset = SleepEDF(tmp_path, channels=["Fpz-Cz", "Pz-Oz"])
         nested = dataset.get_data(dataset.subjects)
     returned = nested["SC400"]["session_1"]["run_1"]
     assert isinstance(returned, mne.io.BaseRaw)
     assert returned.ch_names == ["EEG Fpz-Cz", "EEG Pz-Oz"]
     assert returned.annotations.onset.tolist() == [0.0, 30.0, 60.0]
     assert returned.annotations.description.tolist() == ["1", "1", "3"]
+
+
+def test_sleep_staging_channel_aliases_match_eeg_prefix():
+    from metabci_sleep.paradigms import SleepStaging
+
+    dataset = _synthetic_dataset()
+    raw = mne.io.RawArray(
+        np.zeros((2, 300)),
+        mne.create_info(["EEG Fpz-Cz", "EEG Pz-Oz"], 10, ["eeg", "eeg"]),
+        verbose="ERROR",
+    )
+    raw.set_annotations(mne.Annotations(onset=[0], duration=[30], description=["1"]))
+    dataset._get_single_subject_data = lambda subject, verbose=None: {
+        "session_1": {"run_1": raw}
+    }
+    X, _, _ = SleepStaging("3class", channels=["Fpz-Cz", "Pz-Oz"]).get_data(dataset)
+    assert X.shape == (1, 2, 300)

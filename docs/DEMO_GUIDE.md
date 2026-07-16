@@ -1,6 +1,6 @@
 # Demo Video Script
 
-1. Show the project structure under `MetaSleepGuard/`.
+1. Show the project structure from the repository root.
 2. Show the Sleep-EDF public-data baseline workflow and explain that public expert-labeled sleep data are used for sleep-staging accuracy validation.
 3. Show the quality audit module and the artifact-quality indicators.
 4. Show OpenBCI file replay with a real OpenBCI GUI recording file:

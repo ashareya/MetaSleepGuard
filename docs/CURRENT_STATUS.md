@@ -4,6 +4,8 @@
 
 - Project structure for datasets, preprocessing, features, models, quality, rejection, realtime, Brainstim, visualization, reports, experiments, tests, and docs.
 - Sleep-EDF and ISRUC loaders with canonical label mapping and synthetic smoke records.
+- Real Sleep-EDF validation covers 15 subjects and 15,029 valid 30-second epochs.
+- ISRUC has interface/structure tests; real ISRUC and cross-dataset metrics are not current evidence.
 - Standard preprocessing and 30-second epoching.
 - Baseline feature extraction and causal context using only the previous two epochs.
 - XGBoost baseline with sklearn fallback, subject-level split, full metrics, and bidirectional cross-dataset evaluation.
@@ -19,7 +21,7 @@
 
 ## Open Items
 
-- Run real Sleep-EDF/ISRUC training once datasets are placed in configured paths.
+- Run real ISRUC and bidirectional cross-dataset evaluation once ISRUC files are available.
 - Run real Boruikang BDF/FIF audit once files are placed under `datasets/boruikang_files`.
 - Run real OpenBCI Cyton acquisition on the configured serial port.
 - Replace fallback RandomForest with XGBoost by installing `xgboost` in the `metabci` environment if missing.

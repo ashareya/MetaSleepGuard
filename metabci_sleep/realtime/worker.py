@@ -2,10 +2,15 @@
 
 from __future__ import annotations
 
+import importlib
+import logging
 from typing import Callable
+from unittest.mock import patch
 
 import numpy as np
-from metabci.brainflow.workers import ProcessWorker
+
+with patch("logging.FileHandler", return_value=logging.NullHandler()):
+    ProcessWorker = importlib.import_module("metabci.brainflow.workers").ProcessWorker
 
 from MetaSleepGuard.realtime.realtime_pipeline import RealtimePipeline
 

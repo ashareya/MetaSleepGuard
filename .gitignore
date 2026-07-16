@@ -19,3 +19,7 @@ tmp/
 Thumbs.db
 *.bak
 README_before_competition_polish.md
+
+.Rhistory
+CODEX_HANDOFF.md
+submission_materials/

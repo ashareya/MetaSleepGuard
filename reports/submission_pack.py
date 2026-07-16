@@ -165,7 +165,7 @@ def _real_conclusion(ten: dict, sixty: dict, window_88: dict[str, str]) -> str:
 
 ## 数据解释边界
 
-真实 OpenBCI 数据没有 PSG 和专家 30 秒睡眠标签，只验证工程链路与质量守护能力。睡眠分期 Accuracy、Macro-F1、Cohen's Kappa、每类指标及跨数据集泛化必须由带专家标签的 Sleep-EDF/ISRUC 验证。
+真实 OpenBCI 数据没有 PSG 和专家 30 秒睡眠标签，只验证工程链路与质量守护能力。当前睡眠分期 Accuracy、Macro-F1、Cohen's Kappa 和每类指标仅来自带专家标签的 Sleep-EDF；只有取得真实 ISRUC 数据并完成复测后，才可报告 ISRUC 或跨数据集泛化结果。
 """
 
 
@@ -261,7 +261,7 @@ def _objective_evidence(repo_root: Path, reports_root: Path, public_summary: dic
 
 - 功能描述：使用 Sleep-EDF / Sleep Physionet subjects {', '.join(public_summary['subject_ids'])}、Fpz-Cz/Pz-Oz 双导、30 秒 Epoch 完成三分类和五分类基线。
 - 被试数：{public_summary['n_subjects']}；有效 Epoch：{public_summary['n_epochs_total']}。
-- 代码路径：`MetaSleepGuard/experiments/run_public_sleep_real_baseline.py`、`MetaSleepGuard/models/public_sleep_real_baseline.py`。
+- 代码路径：`experiments/run_public_sleep_real_baseline.py`、`models/public_sleep_real_baseline.py`。
 - 测试命令：`run.ps1 -Task public-sleep-real-baseline -Python $py`。
 - 输出路径：`outputs/metasleepguard_outputs/public_sleep_real_baseline/`。
 - 3-class 指标：Accuracy {three['accuracy']:.4f}，Macro-F1 {three['macro_f1']:.4f}，Kappa {three['cohen_kappa']:.4f}。
@@ -289,6 +289,12 @@ def _objective_evidence(repo_root: Path, reports_root: Path, public_summary: dic
         if public_summary
         else "当前环境缺 XGBoost，synthetic smoke 使用 RF fallback；正式模型指标需补数据与依赖。"
     )
+    model_evidence_boundary = (
+        f"已完成 {public_summary['n_subjects']} 名真实 Sleep-EDF 被试的三/五分类准确率验证；"
+        "OpenBCI 数据只用于采集与质量链路验证。"
+        if public_summary
+        else "模型准确率阶段仍等待真实公开睡眠数据。"
+    )
     return f"""# 客观评分证据表
 
 {public_metrics}
@@ -296,7 +302,7 @@ def _objective_evidence(repo_root: Path, reports_root: Path, public_summary: dic
 ## Brainda 使用证据
 
 - 功能描述：检测 `metabci.brainda`，以 Brainda 为公开数据/范式兼容边界，并提供 Sleep-EDF、ISRUC 适配器。
-- 代码路径：`MetaSleepGuard/metabci_integration.py`、`MetaSleepGuard/datasets/public_sleep/brainda_bridge.py`、`MetaSleepGuard/datasets/public_sleep/loaders.py`。
+- 代码路径：`metabci_integration/`、`metabci_sleep/datasets/`、`datasets/public_sleep/loaders.py`。
 - 测试命令：`run.ps1 -Task status`、`run.ps1 -Task test`。
 - 输出产物：`{repo_root / 'outputs/metasleepguard_outputs/metabci_component_status.json'}`。
 - 可写进文档：项目围绕 MetaBCI Brainda 兼容层实现公开睡眠数据接口与被试级评估流程。
@@ -305,7 +311,7 @@ def _objective_evidence(repo_root: Path, reports_root: Path, public_summary: dic
 ## BrainFlow 使用证据
 
 - 功能描述：提供 OpenBCI Cyton 串口、BrainFlow SDK 采集、双导读取、环形缓存和 30 秒在线处理。
-- 代码路径：`MetaSleepGuard/realtime/openbci_brainflow_stream.py`、`MetaSleepGuard/realtime/realtime_pipeline.py`、`MetaSleepGuard/experiments/run_openbci_realtime.py`。
+- 代码路径：`realtime/openbci_brainflow_stream.py`、`realtime/realtime_pipeline.py`、`experiments/run_openbci_realtime.py`。
 - 测试命令：`run.ps1 -Task status`、`run.ps1 -Task test`；硬件现场使用 `run.ps1 -Task realtime -SerialPort COMx`。
 - 输出产物：真实离线证据位于 `{reports_root}`。
 - 可写进文档：完成 BrainFlow/OpenBCI 运行接口和真实 OpenBCI GUI 文件回放验证。
@@ -314,7 +320,7 @@ def _objective_evidence(repo_root: Path, reports_root: Path, public_summary: dic
 ## Brainstim 使用证据
 
 - 功能描述：中文提示、倒计时、睁眼/闭眼/眨眼/咬牙/转头/动线事件、LSL 与 CSV 日志。
-- 代码路径：`MetaSleepGuard/brainstim_task/calibration_task.py`、`MetaSleepGuard/brainstim_task/lsl_marker.py`、`MetaSleepGuard/experiments/run_brainstim_calibration.py`。
+- 代码路径：`brainstim_task/calibration_task.py`、`brainstim_task/lsl_marker.py`、`experiments/run_brainstim_calibration.py`。
 - 测试命令：`run.ps1 -Task test`；图形范式在 `metabci_stim` 环境执行 `run.ps1 -Task brainstim`。
 - 输出产物：标定日志由任务运行目录生成；真实实验阶段质量表位于 10 分钟报告目录。
 - 可写进文档：完成面向质量标定的 Brainstim 风格范式与事件日志接口。
@@ -323,16 +329,16 @@ def _objective_evidence(repo_root: Path, reports_root: Path, public_summary: dic
 ## 新增大规模功能
 
 - 功能描述：公开数据分期、双导特征、因果上下文、质量检测、校准拒识、实时采集、文件回放、自动报告形成完整链路。
-- 代码路径：`MetaSleepGuard/datasets`、`preprocessing`、`features`、`models`、`quality`、`rejection`、`realtime`、`reports`。
+- 代码路径：`datasets`、`preprocessing`、`features`、`models`、`quality`、`rejection`、`realtime`、`reports`。
 - 测试命令：`run.ps1 -Task test`、`run.ps1 -Task real-openbci-report`。
 - 输出产物：两份真实 HTML 报告、CSV、JSON、PNG 与源文件 SHA256 manifest。
 - 可写进文档：新增从数据读取到可信输出和自动报告的系统级功能。
-- 边界限制：模型准确率阶段仍等待真实公开睡眠数据。
+- 边界限制：{model_evidence_boundary}
 
 ## 新增数据集
 
 - 功能描述：Sleep-EDF 与 ISRUC-Sleep 读取、标签统一、三/四/五分类及被试级划分。
-- 代码路径：`MetaSleepGuard/datasets/public_sleep/loaders.py`、`MetaSleepGuard/preprocessing/label_mapping.py`。
+- 代码路径：`datasets/public_sleep/loaders.py`、`preprocessing/label_mapping.py`。
 - 测试命令：`run.ps1 -Task test`；数据就绪后使用严格 public-sleep 任务。
 - 输出产物：{dataset_output}
 - 可写进文档：已新增两个公开数据集接口和无 Epoch 泄漏的评估流程。
@@ -359,7 +365,7 @@ def _objective_evidence(repo_root: Path, reports_root: Path, public_summary: dic
 ## 完全基于 MetaBCI 开发证据
 
 - 功能描述：项目架构明确围绕 Brainda、BrainFlow、Brainstim 三支柱扩展，保留 MetaBCI 许可证说明。
-- 代码路径：`MetaSleepGuard/metabci_integration.py`、`THIRD_PARTY_NOTICES.md`、`LICENSE`、三组件对应模块。
+- 代码路径：`metabci_integration/`、`metabci_sleep/`、`THIRD_PARTY_NOTICES.md`、`LICENSE`。
 - 测试命令：`run.ps1 -Task status`。
 - 输出产物：三组件状态 JSON、真实 OpenBCI 报告和 Brainstim 测试日志。
 - 可写进文档：MetaSleep-Guard 是基于 MetaBCI 三组件边界扩展的双导可信睡眠质量守护应用。
@@ -397,7 +403,7 @@ def _test_document(ten: dict, sixty: dict, test_result: dict, public_summary: di
 
 ## 项目技术路径
 
-MetaSleep-Guard 围绕 MetaBCI Brainda、BrainFlow、Brainstim 三部分建设。公开 Sleep-EDF/ISRUC 负责带专家标签的分期验证；OpenBCI Cyton Fp1/Fp2 双导负责真实采集、文件回放、质量审计、30 秒滑窗和拒识；Brainstim 标定范式负责质量/伪迹事件提示与日志。信号经通道选择、250 Hz、带通/陷波、30 秒 Epoch、手工特征和仅使用前两个 Epoch 的因果上下文进入基线模型，输出概率校准结果或“暂不判定”。
+MetaSleep-Guard 围绕 MetaBCI Brainda、BrainFlow、Brainstim 三部分建设。Sleep-EDF提供当前带专家标签的分期准确率证据，ISRUC提供兼容数据接口但不作为当前真实指标；OpenBCI Cyton Fp1/Fp2 双导负责真实采集、文件回放、质量审计、30 秒滑窗和拒识；Brainstim 标定范式负责质量/伪迹事件提示与日志。信号经通道选择、250 Hz、带通/陷波、30 秒 Epoch、手工特征和仅使用前两个 Epoch 的因果上下文进入基线模型，输出概率校准结果或“暂不判定”。
 
 ## 项目整体效果
 
@@ -452,7 +458,7 @@ def _video_assets(video_dir: Path, ten: dict, sixty: dict) -> list[Path]:
 | 1:15-2:15 | 打开 60 分钟 HTML 和窗口 CSV | 120 个窗口、覆盖率 {sixty['coverage_ratio']:.3%}、真实缺口、质量趋势 |
 | 2:15-2:35 | 定位第 88 窗口 | coverage=0、D 级、暂不判定，展示中断检测与主动拒识 |
 | 2:35-2:50 | 展示报告目录 | HTML、Markdown、summary、CSV、PNG、manifest 自动生成 |
-| 2:50-3:00 | 展示数据边界页 | OpenBCI 不证明分期准确率；准确率由 Sleep-EDF/ISRUC 验证 |
+| 2:50-3:00 | 展示数据边界页 | OpenBCI 不证明分期准确率；当前准确率由 15 名 Sleep-EDF 被试验证，ISRUC 仅完成接口测试 |
 """
     storyboard = """# 分镜表
 
@@ -466,7 +472,7 @@ def _video_assets(video_dir: Path, ten: dict, sixty: dict) -> list[Path]:
 | 6 | 输出目录 | HTML/MD/JSON/CSV/PNG/manifest | 不展示 synthetic 指标为成绩 |
 | 7 | 结论边界 | 公开数据与真实设备数据职责分离 | 不声称 PSG/专家验证 |
 """
-    narration = f"""眠卫 MetaSleep-Guard 围绕 MetaBCI 的 Brainda、BrainFlow 和 Brainstim 三部分开发。当前真实实验使用 OpenBCI Cyton 采集 Fp1、Fp2 前额双导。十分钟质量标定数据覆盖率为 {ten['coverage_ratio']:.3%}，系统对睁眼、闭眼及多类伪迹进行质量分级。六十分钟连续实验生成一百二十个三十秒窗口，覆盖率为 {sixty['coverage_ratio']:.3%}，并真实记录到数据中断。第八十八个窗口覆盖率为零，系统将其判为 D 级并输出暂不判定，说明质量守护不会对无效数据强行给出可信结论。每次分析自动导出 HTML、Markdown、JSON、CSV、图表和来源清单。需要强调，OpenBCI 数据用于验证采集、质量审计、中断检测、拒识与报告，不用于证明睡眠分期准确率；分期指标必须由带专家标签的 Sleep-EDF 和 ISRUC 数据验证。"""
+    narration = f"""眠卫 MetaSleep-Guard 围绕 MetaBCI 的 Brainda、BrainFlow 和 Brainstim 三部分开发。当前真实实验使用 OpenBCI Cyton 采集 Fp1、Fp2 前额双导。十分钟质量标定数据覆盖率为 {ten['coverage_ratio']:.3%}，系统对睁眼、闭眼及多类伪迹进行质量分级。六十分钟连续实验生成一百二十个三十秒窗口，覆盖率为 {sixty['coverage_ratio']:.3%}，并真实记录到数据中断。第八十八个窗口覆盖率为零，系统将其判为 D 级并输出暂不判定，说明质量守护不会对无效数据强行给出可信结论。每次分析自动导出 HTML、Markdown、JSON、CSV、图表和来源清单。需要强调，OpenBCI 数据用于验证采集、质量审计、中断检测、拒识与报告，不用于证明睡眠分期准确率；当前分期指标来自带专家标签的 Sleep-EDF 数据，ISRUC 目前仅完成数据接口与结构测试。"""
     checklist = r"""# 录屏检查清单
 
 - [ ] 使用 `metabci` 环境运行 status，画面显示三组件 True。
@@ -601,7 +607,7 @@ def _manifest_rows(
         else "real public datasets not present"
     )
     add(
-        repo_root / "MetaSleepGuard/datasets/public_sleep/loaders.py",
+        repo_root / "datasets/public_sleep/loaders.py",
         "source code",
         "project",
         "Sleep-EDF/ISRUC interfaces",

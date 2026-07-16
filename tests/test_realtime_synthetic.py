@@ -33,3 +33,12 @@ def test_large_chunk_processes_first_epoch_not_trailing_epoch():
     pipeline.append_and_process(samples)
     assert np.array_equal(captured[0][0], samples[:, :20])
     assert captured[0][1] == 0.0
+
+
+def test_realtime_pipeline_rejects_buffer_shorter_than_epoch():
+    try:
+        RealtimePipeline(sfreq=10, epoch_sec=30, buffer_minutes=0.1)
+    except ValueError as exc:
+        assert "complete epoch" in str(exc)
+    else:
+        raise AssertionError("short ring buffer should be rejected")

@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 import importlib
+import logging
 import pkgutil
 from pathlib import Path
 import sys
 from types import ModuleType
+from unittest.mock import patch
 
 
 @dataclass(frozen=True)
@@ -65,7 +67,12 @@ COMPONENT_CHILDREN = {
 
 def _import_module(module_name: str) -> tuple[ModuleType | None, str | None]:
     try:
-        return importlib.import_module(module_name), None
+        if module_name.startswith("metabci.brainflow"):
+            with patch("logging.FileHandler", return_value=logging.NullHandler()):
+                module = importlib.import_module(module_name)
+        else:
+            module = importlib.import_module(module_name)
+        return module, None
     except Exception as exc:  # pragma: no cover - exact optional dependency differs by env
         return None, f"{type(exc).__name__}: {exc}"
 

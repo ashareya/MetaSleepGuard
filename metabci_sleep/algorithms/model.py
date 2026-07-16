@@ -71,6 +71,31 @@ class SleepStagingEstimator:
     def predict_labels(self, X: np.ndarray, subject_ids: Sequence[str] | None = None) -> list[str]:
         return [self.classes[index] for index in self.predict(X, subject_ids=subject_ids)]
 
+    def predict_proba_stream(
+        self,
+        X: np.ndarray,
+        subject_ids: Sequence[str] | None = None,
+    ) -> np.ndarray:
+        if not self._fitted:
+            raise RuntimeError("estimator is not fitted")
+        array = np.asarray(X, dtype=float)
+        if array.ndim == 2:
+            features = array
+        elif array.ndim == 3:
+            features = self.extractor.transform_stream(array, subject_ids=subject_ids)
+        else:
+            raise ValueError("X must be feature matrix or (epochs, channels, samples)")
+        return predict_class_probabilities(self.model, features, len(self.classes))
+
+    def predict_stream(self, X: np.ndarray, subject_ids: Sequence[str] | None = None) -> np.ndarray:
+        return np.argmax(self.predict_proba_stream(X, subject_ids=subject_ids), axis=1)
+
+    def predict_labels_stream(self, X: np.ndarray, subject_ids: Sequence[str] | None = None) -> list[str]:
+        return [self.classes[index] for index in self.predict_stream(X, subject_ids=subject_ids)]
+
+    def reset_stream(self, subject_id: str | None = None) -> None:
+        self.extractor.reset_stream(subject_id)
+
     def save(self, path: str | Path) -> Path:
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)

@@ -135,8 +135,27 @@ class SleepStaging(BaseParadigm):
     def _pick_channel_names(self, available: list[str]) -> list[str]:
         if self.select_channels is None:
             return list(available)
-        lookup = {channel.upper(): channel for channel in available}
-        missing = [channel for channel in self.select_channels if channel not in lookup]
+        lookup = {_normalize_channel(channel): channel for channel in available}
+        selected = []
+        missing = []
+        for requested in self.select_channels:
+            normalized = _normalize_channel(requested)
+            match = lookup.get(normalized)
+            if match is None:
+                candidates = [
+                    actual
+                    for key, actual in lookup.items()
+                    if key.endswith(normalized) or normalized.endswith(key)
+                ]
+                match = candidates[0] if len(candidates) == 1 else None
+            if match is None:
+                missing.append(requested)
+            else:
+                selected.append(match)
         if missing:
             raise ValueError(f"requested channels not found: {missing}; available={available}")
-        return [lookup[channel] for channel in self.select_channels]
+        return selected
+
+
+def _normalize_channel(name: str) -> str:
+    return "".join(character.lower() for character in str(name) if character.isalnum())

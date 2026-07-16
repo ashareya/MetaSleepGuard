@@ -27,6 +27,14 @@ class RealtimePipeline:
         buffer_minutes: float = 10.0,
         output_log: str | Path | None = None,
     ) -> None:
+        if sfreq <= 0:
+            raise ValueError("sfreq must be positive")
+        if epoch_sec <= 0:
+            raise ValueError("epoch_sec must be positive")
+        if buffer_minutes <= 0 or buffer_minutes * 60.0 < epoch_sec:
+            raise ValueError("buffer_minutes must hold at least one complete epoch")
+        if not channel_names:
+            raise ValueError("at least one channel name is required")
         self.sfreq = float(sfreq)
         self.channel_names = list(channel_names)
         self.epoch_sec = float(epoch_sec)

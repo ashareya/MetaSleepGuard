@@ -86,11 +86,26 @@ class SleepEDF(BaseDataset):
     def _validate_channels(self, available: list[str]) -> list[str]:
         if self.requested_channels is None:
             return available
-        lookup = {name.upper(): name for name in available}
-        missing = [name for name in self.requested_channels if name.upper() not in lookup]
+        lookup = {_normalize_channel(name): name for name in available}
+        selected = []
+        missing = []
+        for requested in self.requested_channels:
+            normalized = _normalize_channel(requested)
+            match = lookup.get(normalized)
+            if match is None:
+                candidates = [
+                    actual
+                    for key, actual in lookup.items()
+                    if key.endswith(normalized) or normalized.endswith(key)
+                ]
+                match = candidates[0] if len(candidates) == 1 else None
+            if match is None:
+                missing.append(requested)
+            else:
+                selected.append(match)
         if missing:
             raise ValueError(f"Sleep-EDF channels not found: {missing}; available={available}")
-        return [lookup[name.upper()] for name in self.requested_channels]
+        return selected
 
     def data_path(
         self,
@@ -155,3 +170,7 @@ class SleepEDF(BaseDataset):
             description=descriptions,
             orig_time=raw.info.get("meas_date"),
         )
+
+
+def _normalize_channel(name: str) -> str:
+    return "".join(character.lower() for character in str(name) if character.isalnum())

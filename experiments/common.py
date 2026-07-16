@@ -23,7 +23,9 @@ def project_root() -> Path:
 
 
 def repo_root() -> Path:
-    return Path(__file__).resolve().parents[2]
+    """Return the Git repository root containing ``pyproject.toml``."""
+
+    return project_root()
 
 
 def load_config(path: str | Path | None = None) -> dict:
