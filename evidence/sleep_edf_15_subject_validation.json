@@ -1,0 +1,42 @@
+{
+  "dataset": "Sleep-EDF Expanded / Sleep Physionet",
+  "generated_from": "Sleep-EDF Expanded official PSG and expert Hypnogram files",
+  "n_subjects": 15,
+  "n_epochs_total": 15029,
+  "channels": ["Fpz-Cz", "Pz-Oz"],
+  "epoch_duration_sec": 30.0,
+  "split_method": "GroupKFold(n_splits=5, group=subject_id)",
+  "subject_overlap_in_any_fold": false,
+  "skipped_records": [],
+  "metrics": {
+    "3class": {
+      "accuracy": 0.8534832656863397,
+      "macro_f1": 0.8064070021537111,
+      "weighted_f1": 0.8488962173661747,
+      "cohen_kappa": 0.7045259050752138
+    },
+    "5class": {
+      "accuracy": 0.801650143056757,
+      "macro_f1": 0.7135866582945768,
+      "weighted_f1": 0.7956480057798963,
+      "cohen_kappa": 0.7187988688849488
+    }
+  },
+  "subjects": [
+    {"subject_id": "SC400", "n_epochs": 841, "psg_file": "SC4001E0-PSG.edf", "psg_sha1": "adabd3b01fc7bb75c523a974f38ee3ae4e57b40f", "hypnogram_file": "SC4001EC-Hypnogram.edf", "hypnogram_sha1": "21c998eadc8b1e3ea6727d3585186b8f76e7e70b"},
+    {"subject_id": "SC401", "n_epochs": 1103, "psg_file": "SC4011E0-PSG.edf", "psg_sha1": "4d17451f7847355bcab17584de05e7e1df58c660", "hypnogram_file": "SC4011EH-Hypnogram.edf", "hypnogram_sha1": "d582a3cbe2db481a362af890bc5a2f5ca7c878dc"},
+    {"subject_id": "SC402", "n_epochs": 1025, "psg_file": "SC4021E0-PSG.edf", "psg_sha1": "8b135afa7fb93bb5f1998fda50355944777c245e", "hypnogram_file": "SC4021EH-Hypnogram.edf", "hypnogram_sha1": "91043cfe46695088b17b6a02937b25efd674c3fb"},
+    {"subject_id": "SC403", "n_epochs": 952, "psg_file": "SC4031E0-PSG.edf", "psg_sha1": "85e58dc1e3303537dade8c5827ab58328239c384", "hypnogram_file": "SC4031EC-Hypnogram.edf", "hypnogram_sha1": "6363d8b0fdc48cf396c9abf054bb4a9696d38bdb"},
+    {"subject_id": "SC404", "n_epochs": 1235, "psg_file": "SC4041E0-PSG.edf", "psg_sha1": "04d2b88d25f2ae4a65ba44cd9145bd12800a0e20", "hypnogram_file": "SC4041EC-Hypnogram.edf", "hypnogram_sha1": "f148821669bd3588187b3b430bd79adf569f86d1"},
+    {"subject_id": "SC405", "n_epochs": 672, "psg_file": "SC4051E0-PSG.edf", "psg_sha1": "ea073451b65ce8a6f1a02a8cc2b89d1a162ca0ae", "hypnogram_file": "SC4051EC-Hypnogram.edf", "hypnogram_sha1": "4159ef8a3e119d6dcc1bede806f6fbc017b27a0f"},
+    {"subject_id": "SC406", "n_epochs": 843, "psg_file": "SC4061E0-PSG.edf", "psg_sha1": "1736736e585807c14f1ae8bc87a94cae222c5170", "hypnogram_file": "SC4061EC-Hypnogram.edf", "hypnogram_sha1": "4bf99622c67c281b25ceccd35e7050328a2946e8"},
+    {"subject_id": "SC407", "n_epochs": 976, "psg_file": "SC4071E0-PSG.edf", "psg_sha1": "1374b34f6139b6ff7e865d8243eef39ba334ef50", "hypnogram_file": "SC4071EC-Hypnogram.edf", "hypnogram_sha1": "608024fd19a140ad233a4680e07c2495a74b69c2"},
+    {"subject_id": "SC408", "n_epochs": 1134, "psg_file": "SC4081E0-PSG.edf", "psg_sha1": "0e1cc2c4e1da14ab94515e3e7e75e8ad30ec99cb", "hypnogram_file": "SC4081EC-Hypnogram.edf", "hypnogram_sha1": "9ec663ffa5c17afcaca59d7829d77b9165102237"},
+    {"subject_id": "SC409", "n_epochs": 1132, "psg_file": "SC4091E0-PSG.edf", "psg_sha1": "b3502e0bd54683e973182c791aa962b804e79633", "hypnogram_file": "SC4091EC-Hypnogram.edf", "hypnogram_sha1": "7aa63b408c769a4a983a908b6ba41d87dd743c6e"},
+    {"subject_id": "SC410", "n_epochs": 1104, "psg_file": "SC4101E0-PSG.edf", "psg_sha1": "3ae168ff2c9c0c56f51205fdb10f05a4c6b2064e", "hypnogram_file": "SC4101EC-Hypnogram.edf", "hypnogram_sha1": "60d9c3913881e11b06ad99e9870bd1ca4d93c952"},
+    {"subject_id": "SC411", "n_epochs": 928, "psg_file": "SC4111E0-PSG.edf", "psg_sha1": "e490956b4dce01c46ba88a2b847f091bb54ea16e", "hypnogram_file": "SC4111EC-Hypnogram.edf", "hypnogram_sha1": "12db1920e2f6083c8ab1f2c24fe35dfa03715e4a"},
+    {"subject_id": "SC412", "n_epochs": 1052, "psg_file": "SC4121E0-PSG.edf", "psg_sha1": "33c72025a7a215ea5e255f4254cb0f93b1313369", "hypnogram_file": "SC4121EC-Hypnogram.edf", "hypnogram_sha1": "daa57ece807cb5325c6d1ce059f0e8a8d1c85391"},
+    {"subject_id": "SC413", "n_epochs": 1028, "psg_file": "SC4131E0-PSG.edf", "psg_sha1": "42ff97035aae6dd34ca9437857c48ac6f2ab97df", "hypnogram_file": "SC4131EC-Hypnogram.edf", "hypnogram_sha1": "5beef85170bdbb5cf2eea24a79f0f5c2c3975c4b"},
+    {"subject_id": "SC414", "n_epochs": 1004, "psg_file": "SC4141E0-PSG.edf", "psg_sha1": "83493e1c32d441c9e5ee3de6a024bfb5e7ab9f5f", "hypnogram_file": "SC4141EU-Hypnogram.edf", "hypnogram_sha1": "511d398f22b9b2b304de27c40740a41584ff6af2"}
+  ]
+}

@@ -2,7 +2,7 @@ param(
     [ValidateSet(
         "status", "prepare", "train", "evaluate", "cross", "audit", "replay", "realtime", "brainstim",
         "real-openbci-report", "openbci-file-replay", "submission-pack", "metrics-export", "demo-assets",
-        "public-sleep-baseline", "public-sleep-eval", "cross-dataset-eval", "public-sleep-real-baseline",
+        "public-sleep-baseline", "public-sleep-eval", "cross-dataset-eval", "public-sleep-download", "public-sleep-real-baseline",
         "metabci-integration-test", "metabci-sleep-smoke", "report", "test"
     )]
     [string]$Task = "test",
@@ -17,13 +17,19 @@ param(
     [string]$Model,
     [string]$SerialPort,
     [switch]$Synthetic,
-    [int]$MaxSubjects = 5,
+    [int]$MaxSubjects = 15,
     [double]$DurationSec = 60,
     [string]$Python = "python"
 )
 
 $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
+$previousPythonPath = $env:PYTHONPATH
+$sourcePaths = @($PSScriptRoot, $repoRoot)
+if ($previousPythonPath) {
+    $sourcePaths += $previousPythonPath
+}
+$env:PYTHONPATH = $sourcePaths -join [IO.Path]::PathSeparator
 Push-Location $repoRoot
 try {
     switch ($Task) {
@@ -112,6 +118,12 @@ try {
                 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
             }
         }
+        "public-sleep-download" {
+            if (-not $DataRoot) {
+                throw "-DataRoot must point to the Sleep-EDF download directory."
+            }
+            & $Python -m MetaSleepGuard.experiments.download_sleep_edf_subset --data-root $DataRoot --subjects $MaxSubjects
+        }
         "public-sleep-real-baseline" {
             $args = @("-m", "MetaSleepGuard.experiments.run_public_sleep_real_baseline", "--subjects", $MaxSubjects)
             if ($DataRoot) { $args += @("--data-root", $DataRoot) }
@@ -126,4 +138,5 @@ try {
 }
 finally {
     Pop-Location
+    $env:PYTHONPATH = $previousPythonPath
 }

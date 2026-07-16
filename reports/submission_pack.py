@@ -25,7 +25,7 @@ TASKS = [
     ("public-sleep-baseline", "提供真实目录后可运行", "三/四/五分类严格真实公开数据训练", "完整 Sleep-EDF 或 ISRUC", "否", "否", "数据就绪后是"),
     ("public-sleep-eval", "提供真实目录后可运行", "三/四/五分类严格真实公开数据评估", "完整 Sleep-EDF 或 ISRUC", "否", "否", "数据就绪后是"),
     ("cross-dataset-eval", "需两个真实数据集", "三/四/五分类双向跨数据集评估", "完整 Sleep-EDF 与 ISRUC", "否", "否", "数据就绪后是"),
-    ("public-sleep-real-baseline", "数据就绪后直接运行", "Sleep-EDF 双导三/五分类真实基线", "MNE；至少 5 名 Sleep-EDF 被试", "否", "否", "是"),
+    ("public-sleep-real-baseline", "数据就绪后直接运行", "Sleep-EDF 双导三/五分类真实基线", "MNE；至少 15 名 Sleep-EDF 被试", "否", "否", "是"),
     ("audit", "需输入", "BDF/FIF 文件审计", "-InputPath 指向真实 BDF/FIF", "否", "否", "有数据后是"),
     ("replay", "需输入", "单文件通用回放", "-InputPath；可选模型", "否", "可", "辅助"),
     ("realtime", "需硬件", "OpenBCI Cyton BrainFlow 实时采集", "串口和设备；或 -Synthetic", "可选", "实时模式是", "现场演示"),
@@ -267,7 +267,7 @@ def _objective_evidence(repo_root: Path, reports_root: Path, public_summary: dic
 - 3-class 指标：Accuracy {three['accuracy']:.4f}，Macro-F1 {three['macro_f1']:.4f}，Kappa {three['cohen_kappa']:.4f}。
 - 5-class 指标：Accuracy {five['accuracy']:.4f}，Macro-F1 {five['macro_f1']:.4f}，Kappa {five['cohen_kappa']:.4f}。
 - 可写进文档：真实公开数据、专家标签、GroupKFold 被试级划分，无 Epoch 随机泄漏。
-- 边界限制：5 名被试、每人一晚的小样本传统模型基线，不代表完整 Sleep-EDF 队列性能。
+- 边界限制：{public_summary['n_subjects']} 名被试、每人一晚的子集传统模型基线，不代表完整 Sleep-EDF 队列性能。
 """
     brainda_boundary = (
         f"已完成 {public_summary['n_subjects']} 名 Sleep-EDF 被试真实基线；ISRUC 与跨数据集真实评估仍待数据。"

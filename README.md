@@ -83,7 +83,8 @@ Python：
     .\run.ps1 -Task metabci-integration-test -Python $py
     .\run.ps1 -Task real-openbci-report -Python $py
     .\run.ps1 -Task openbci-file-replay -Python $py
-    .\run.ps1 -Task public-sleep-real-baseline -Python $py
+    .\run.ps1 -Task public-sleep-download -DataRoot .\data\public_sleep\sleep_edf_raw -MaxSubjects 15 -Python $py
+    .\run.ps1 -Task public-sleep-real-baseline -DataRoot .\data\public_sleep\sleep_edf_raw -MaxSubjects 15 -Python $py
     .\run.ps1 -Task metrics-export -Python $py
     .\run.ps1 -Task submission-pack -Python $py
     .\run.ps1 -Task demo-assets -Python $py
@@ -91,10 +92,13 @@ Python：
 
 ## Evaluation Evidence
 
-The submitted Sleep-EDF metrics are based on five subjects, one night per subject, and subject-level evaluation splits.
+The current Sleep-EDF metrics are based on 15 subjects, one night per subject, and subject-level GroupKFold evaluation splits.
 
-- Three-class Accuracy: 0.826028
-- Five-class Accuracy: 0.746121
+- Valid 30-second epochs: 15,029
+- Three-class Accuracy: 0.853483
+- Three-class Macro-F1: 0.806407
+- Five-class Accuracy: 0.801650
+- Five-class Macro-F1: 0.713587
 - Real OpenBCI 10-minute coverage: 0.993948
 - Real OpenBCI 60-minute coverage: 0.973399
 

@@ -11,7 +11,8 @@ from MetaSleepGuard.preprocessing.epoching import epoch_signal
 from MetaSleepGuard.preprocessing.label_mapping import map_raw_stage
 from MetaSleepGuard.reports.submission_pack import _manifest_rows
 from MetaSleepGuard.reports.submission_pack import _real_items
-from MetaSleepGuard.experiments.run_public_sleep_real_baseline import _readme
+from MetaSleepGuard.experiments.download_sleep_edf_subset import _byte_ranges
+from MetaSleepGuard.experiments.run_public_sleep_real_baseline import _limitations, _readme
 
 
 def test_sleep_edf_raw_label_mapping():
@@ -137,5 +138,19 @@ def test_real_baseline_readme_reproduction_command_has_no_carriage_return():
         "5class": {"accuracy": 0.7, "macro_f1": 0.6, "cohen_kappa": 0.5},
     }
     text = _readme(summary, results)
-    assert ".\\run.ps1 -Task public-sleep-real-baseline -Python $py" in text
+    assert ".\\run.ps1 -Task public-sleep-real-baseline -MaxSubjects 5 -Python $py" in text
     assert "\r" not in text
+
+
+def test_real_baseline_limitations_use_actual_subject_count():
+    text = _limitations({"n_subjects": 15})
+    assert "15 名被试" in text
+    assert "至少 5 名被试" not in text
+
+
+def test_segmented_download_ranges_cover_file_once():
+    ranges = _byte_ranges(101, 8)
+    assert ranges[0][0] == 0
+    assert ranges[-1][1] == 100
+    assert sum(end - start + 1 for start, end in ranges) == 101
+    assert all(left[1] + 1 == right[0] for left, right in zip(ranges, ranges[1:]))

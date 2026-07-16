@@ -15,6 +15,7 @@ dependencies = [
     "pandas>=2.0",
     "mne>=1.5",
     "metabci>=0.2.0",
+    "requests>=2.31",
 ]
 
 [project.optional-dependencies]

@@ -53,8 +53,12 @@ def main() -> None:
     output_root = Path(args.output_root).resolve()
     pairs = ensure_sleep_edf_data(data_root, list(range(args.subjects)), args.recording, not args.no_download)
     dataset = load_feature_dataset(pairs[: args.subjects])
-    if len(dataset["subject_summaries"]) < 5:
-        raise RuntimeError("Fewer than five valid dual-channel subjects remained after channel/annotation checks")
+    loaded_subjects = len(dataset["subject_summaries"])
+    if loaded_subjects < args.subjects:
+        raise RuntimeError(
+            f"Requested {args.subjects} subjects but only {loaded_subjects} valid dual-channel "
+            "subjects remained after channel/annotation checks"
+        )
     output_root.mkdir(parents=True, exist_ok=True)
     results = write_baseline_outputs(output_root, dataset)
 
@@ -275,7 +279,10 @@ def write_baseline_outputs(output_root: Path, dataset: dict) -> dict[str, dict]:
                 "feature_names": dataset["feature_names"],
                 "classifier": "RandomForestClassifier(n_estimators=300, class_weight=balanced_subsample)",
                 "data_limitations": [
-                    "Five-subject small-sample baseline; not a full-cohort benchmark.",
+                    (
+                        f"{len(dataset['subject_summaries'])}-subject subset baseline; "
+                        "not a full-cohort benchmark."
+                    ),
                     "One recording night per subject.",
                     "Pooled out-of-fold metrics from subject-grouped folds.",
                     "No OpenBCI recordings are used for sleep-staging accuracy.",
@@ -325,7 +332,7 @@ def write_baseline_outputs(output_root: Path, dataset: dict) -> dict[str, dict]:
     markdown = _report_markdown(summary, results)
     (output_root / "sleep_edf_real_baseline_report.md").write_text(markdown, encoding="utf-8")
     (output_root / "README.md").write_text(_readme(summary, results), encoding="utf-8")
-    (output_root / "DATA_LIMITATIONS.md").write_text(_limitations(), encoding="utf-8")
+    (output_root / "DATA_LIMITATIONS.md").write_text(_limitations(summary), encoding="utf-8")
     (output_root / "sleep_edf_real_baseline_report.html").write_text(_report_html(markdown), encoding="utf-8")
     return results
 
@@ -392,15 +399,15 @@ def _readme(summary: dict, results: dict[str, dict]) -> str:
 复现命令：
 
 ```powershell
-.\\run.ps1 -Task public-sleep-real-baseline -Python $py
+.\\run.ps1 -Task public-sleep-real-baseline -MaxSubjects {summary['n_subjects']} -Python $py
 ```
 """
 
 
-def _limitations() -> str:
-    return """# Data Limitations
+def _limitations(summary: dict) -> str:
+    return f"""# Data Limitations
 
-- 这是至少 5 名被试、每人一晚的真实 Sleep-EDF 小样本基线，不是完整队列结论。
+- 这是 {summary['n_subjects']} 名被试、每人一晚的真实 Sleep-EDF 子集基线，不是完整队列结论。
 - 指标采用 GroupKFold 被试级划分和 pooled out-of-fold 预测，不存在同一被试跨训练/测试集合。
 - 标准睡眠区间前后各保留最多 30 分钟清醒期，避免整日清醒记录主导类别分布。
 - 模型是传统 RandomForest 基线；低指标照实报告，没有挑选 Epoch 或被试美化结果。
