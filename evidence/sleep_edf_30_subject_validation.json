@@ -1,0 +1,44 @@
+{
+  "dataset": "Sleep-EDF Expanded / Sleep Physionet",
+  "generated_from": "official PSG and expert Hypnogram files",
+  "real_public_dataset": true,
+  "synthetic_demo": false,
+  "n_subjects": 30,
+  "subject_ids": [
+    "SC400", "SC401", "SC402", "SC403", "SC404", "SC405", "SC406", "SC407",
+    "SC408", "SC409", "SC410", "SC411", "SC412", "SC413", "SC414", "SC415",
+    "SC416", "SC417", "SC418", "SC419", "SC420", "SC421", "SC422", "SC423",
+    "SC424", "SC425", "SC426", "SC427", "SC428", "SC429"
+  ],
+  "n_epochs_total": 32781,
+  "channels": ["Fpz-Cz", "Pz-Oz"],
+  "epoch_duration_sec": 30.0,
+  "split_method": "GroupKFold(n_splits=5, group=subject_id)",
+  "subject_overlap_in_any_fold": false,
+  "metrics": {
+    "3class": {
+      "accuracy": 0.8271864799731552,
+      "macro_f1": 0.7704947348514989,
+      "weighted_f1": 0.8202906062541024,
+      "cohen_kappa": 0.6725465675974216,
+      "fold_accuracy_mean": 0.8273838659296153,
+      "fold_accuracy_std": 0.030311055936633056,
+      "fold_accuracy_95ci": [0.8008150539643242, 0.8539526778949065]
+    },
+    "5class": {
+      "accuracy": 0.7662975504102987,
+      "macro_f1": 0.689346296741236,
+      "weighted_f1": 0.7587642887227836,
+      "cohen_kappa": 0.6742104095965344,
+      "fold_accuracy_mean": 0.7664393595350394,
+      "fold_accuracy_std": 0.03370927585298182,
+      "fold_accuracy_95ci": [0.736891876481452, 0.7959868425886267]
+    }
+  },
+  "evidence_boundary": [
+    "One recording night per subject.",
+    "Pooled out-of-fold predictions use subject-grouped folds.",
+    "OpenBCI recordings are not used for sleep-staging accuracy.",
+    "ISRUC real-data and cross-dataset metrics are not included."
+  ]
+}

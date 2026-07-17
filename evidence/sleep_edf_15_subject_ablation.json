@@ -1,0 +1,47 @@
+{
+  "dataset": "Sleep-EDF Expanded / Sleep Physionet",
+  "real_public_dataset": true,
+  "synthetic_staging_metrics": false,
+  "n_subjects": 15,
+  "n_epochs": 15029,
+  "split_method": "GroupKFold(n_splits=5, group=subject_id)",
+  "subject_overlap_in_any_fold": false,
+  "random_state": 42,
+  "configurations": {
+    "single_epoch_dual_channel": {
+      "accuracy": 0.8013174529243463,
+      "macro_f1": 0.7134204346783194,
+      "ece": 0.0665993064457103,
+      "brier_score": 0.29572200867391757
+    },
+    "causal_context_dual_channel": {
+      "accuracy": 0.8166877370417194,
+      "macro_f1": 0.7430740989878708,
+      "ece": 0.09172986705881854,
+      "brier_score": 0.2818329385399316
+    },
+    "single_epoch_single_channel": {
+      "accuracy": 0.7447601304145319,
+      "macro_f1": 0.6651746622780637,
+      "ece": 0.016393713528105442,
+      "brier_score": 0.35404727811977066
+    },
+    "causal_context_dual_channel_calibrated": {
+      "accuracy": 0.7943974981702042,
+      "macro_f1": 0.7117856561760385,
+      "ece": 0.02662127658086664,
+      "brier_score": 0.3000830102749436
+    }
+  },
+  "trusted_rejection_working_points": [
+    {"mode": "high_coverage", "threshold": 0.55, "coverage": 0.904, "risk": 0.165},
+    {"mode": "balanced", "threshold": 0.70, "coverage": 0.764, "risk": 0.124},
+    {"mode": "high_trust", "threshold": 0.85, "coverage": 0.547, "risk": 0.070}
+  ],
+  "artifact_injection": {
+    "cases": 6,
+    "detection_recall": 1.0,
+    "clean_false_positive_count": 0
+  },
+  "evidence_boundary": "Controlled artifact injections validate quality rules only and are not sleep-staging accuracy evidence."
+}

@@ -43,6 +43,7 @@ def records_to_feature_dataset(
     target_sfreq: float = 250.0,
     bandpass: tuple[float, float] = (0.3, 35.0),
     context_history: int = 2,
+    n_channels: int = 2,
     apply_preprocessing: bool = True,
 ) -> FeatureDataset:
     """Convert subject records to causal-context feature matrix."""
@@ -59,10 +60,12 @@ def records_to_feature_dataset(
             signals, names = select_channels(record.signals, record.channel_names, channels)
         else:
             signals, names = choose_two_channels(record.signals, record.channel_names)
-        if signals.shape[0] < 2:
-            raise ValueError(f"record {record.subject_id} has fewer than two selected EEG channels")
-        signals = signals[:2]
-        names = ["EEG1", "EEG2"]
+        if n_channels not in {1, 2}:
+            raise ValueError("n_channels must be 1 or 2")
+        if signals.shape[0] < n_channels:
+            raise ValueError(f"record {record.subject_id} has fewer than {n_channels} selected EEG channels")
+        signals = signals[:n_channels]
+        names = [f"EEG{i + 1}" for i in range(n_channels)]
         sfreq = record.sfreq
         if apply_preprocessing:
             signals, sfreq = preprocess_signal(signals, sfreq, target_sfreq=target_sfreq, bandpass=bandpass)
@@ -105,6 +108,7 @@ def records_to_feature_dataset(
             "n_subjects": len({record.subject_id for record in records}),
             "target_sfreq": target_sfreq,
             "context_history": context_history,
+            "n_channels": n_channels,
             "kept_epochs": kept_epochs,
             "dropped_epochs": dropped_epochs,
             "preprocessing": {"bandpass": list(bandpass), "notch_hz": 50.0},

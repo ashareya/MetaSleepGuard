@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
+import hashlib
 import logging
 import re
 from typing import Iterable, Sequence
@@ -112,17 +113,19 @@ def load_sleep_edf(
     return records
 
 
-def find_isruc_records(root: str | Path) -> list[tuple[Path, Path | None]]:
-    """Find ISRUC EDF files and optional adjacent label files."""
+def find_isruc_records(root: str | Path, scorer: int = 1) -> list[tuple[Path, Path | None]]:
+    """Find official ISRUC ``.rec``/EDF files and the requested scorer labels."""
 
     root = Path(root)
-    edfs = sorted(root.rglob("*.edf"))
+    if scorer not in {1, 2}:
+        raise ValueError("scorer must be 1 or 2")
+    edfs = sorted({*root.rglob("*.edf"), *root.rglob("*.rec")})
     records: list[tuple[Path, Path | None]] = []
     for edf in edfs:
         label_candidates: list[Path] = []
-        for suffix in ("*.txt", "*.csv", "*.tsv"):
+        for suffix in ("*.txt", "*.csv", "*.tsv", "*.xls", "*.xlsx"):
             label_candidates.extend(edf.parent.glob(suffix))
-        label = _best_label_candidate(edf, label_candidates)
+        label = _best_label_candidate(edf, label_candidates, scorer=scorer)
         records.append((edf, label))
     return records
 
@@ -141,7 +144,8 @@ def load_isruc_sleep(
 
     records: list[SleepRecord] = []
     included_subjects: set[str] = set()
-    for edf_path, label_path in find_isruc_records(root):
+    scorer2_lookup = {edf.resolve(): label for edf, label in find_isruc_records(root, scorer=2)}
+    for edf_path, label_path in find_isruc_records(root, scorer=1):
         subject_id = _subject_from_path(edf_path)
         if subject_id not in included_subjects and max_subjects is not None and len(included_subjects) >= max_subjects:
             continue
@@ -153,6 +157,9 @@ def load_isruc_sleep(
             if available:
                 raw.pick_channels(available, ordered=True)
         labels = parse_isruc_labels(label_path) if label_path else []
+        scorer2_path = scorer2_lookup.get(edf_path.resolve())
+        scorer2_labels = parse_isruc_labels(scorer2_path) if scorer2_path else []
+        agreement = _label_agreement(labels, scorer2_labels)
         records.append(
             SleepRecord(
                 subject_id=subject_id,
@@ -161,7 +168,15 @@ def load_isruc_sleep(
                 sfreq=float(raw.info["sfreq"]),
                 channel_names=list(raw.ch_names),
                 labels=labels,
-                metadata={"edf_path": str(edf_path), "label_path": str(label_path) if label_path else ""},
+                metadata={
+                    "edf_path": str(edf_path),
+                    "label_path": str(label_path) if label_path else "",
+                    "scorer": 1,
+                    "scorer2_label_path": str(scorer2_path) if scorer2_path else "",
+                    "scorer_agreement": agreement,
+                    "edf_sha256": _sha256(edf_path),
+                    "label_sha256": _sha256(label_path) if label_path else "",
+                },
             )
         )
     return records
@@ -173,6 +188,13 @@ def parse_isruc_labels(path: str | Path) -> list[str]:
     path = Path(path)
     if not path.exists():
         return []
+    if path.suffix.lower() in {".xls", ".xlsx"}:
+        try:
+            import pandas as pd
+        except Exception as exc:  # pragma: no cover
+            raise RuntimeError("pandas with an Excel reader is required for ISRUC Excel labels") from exc
+        table = pd.read_excel(path, header=None)
+        return _labels_from_rows(table.astype(object).values.tolist())
     labels: list[str] = []
     with path.open("r", encoding="utf-8", errors="ignore") as handle:
         for line in handle:
@@ -180,8 +202,9 @@ def parse_isruc_labels(path: str | Path) -> list[str]:
             tokens = [p for p in parts if p != ""]
             if not tokens:
                 continue
-            token = tokens[-1]
-            labels.append(map_raw_stage(token))
+            stage = _stage_from_tokens(tokens)
+            if stage is not None:
+                labels.append(stage)
     return labels
 
 
@@ -262,26 +285,73 @@ def _subject_from_path(path: Path) -> str:
     return match.group(1) if match else path.stem
 
 
-def _best_label_candidate(edf: Path, candidates: Iterable[Path]) -> Path | None:
+def _best_label_candidate(edf: Path, candidates: Iterable[Path], scorer: int = 1) -> Path | None:
     candidates = list(candidates)
     if not candidates:
         return None
     stem = edf.stem.lower()
     def score(path: Path) -> tuple[int, int]:
         candidate = path.stem.lower()
-        if candidate == stem:
+        scorer_tokens = {f"{stem}_{scorer}", f"{stem}-{scorer}", f"{stem} scorer {scorer}"}
+        if candidate in scorer_tokens:
             rank = 0
-        elif candidate in {f"{stem}_1", f"{stem}-1"}:
+        elif re.search(rf"(?:^|[_\-\s]){scorer}(?:$|[_\-\s])", candidate) and stem in candidate:
             rank = 1
-        elif candidate.startswith(f"{stem}_") or candidate.startswith(f"{stem}-"):
+        elif candidate == stem:
             rank = 2
-        elif stem in candidate:
+        elif candidate.startswith(f"{stem}_") or candidate.startswith(f"{stem}-"):
             rank = 3
+        elif stem in candidate:
+            rank = 4
         else:
             rank = 10
+        other = 2 if scorer == 1 else 1
+        if re.search(rf"(?:^|[_\-\s]){other}(?:$|[_\-\s])", candidate):
+            rank += 8
         if any(token in candidate for token in ("readme", "info", "description")):
             rank += 20
         return rank, len(path.name)
 
     scored = sorted(candidates, key=score)
-    return scored[0]
+    return scored[0] if score(scored[0])[0] < 10 else None
+
+
+def _stage_from_tokens(tokens: Sequence[str]) -> str | None:
+    for token in reversed(tokens):
+        cleaned = str(token).strip()
+        if not cleaned or cleaned.lower() in {"stage", "label", "epoch", "nan"}:
+            continue
+        stage = map_raw_stage(cleaned)
+        if stage != "UNKNOWN" or cleaned.upper() in {"UNKNOWN", "U", "?", "-1", "6", "9"}:
+            return stage
+    return None
+
+
+def _labels_from_rows(rows: Iterable[Sequence[object]]) -> list[str]:
+    labels: list[str] = []
+    for row in rows:
+        stage = _stage_from_tokens([str(value) for value in row if value is not None])
+        if stage is not None:
+            labels.append(stage)
+    return labels
+
+
+def _label_agreement(first: Sequence[str], second: Sequence[str]) -> dict:
+    length = min(len(first), len(second))
+    if length == 0:
+        return {"n_compared": 0, "agreement": None}
+    a = np.asarray(first[:length])
+    b = np.asarray(second[:length])
+    valid = (a != "UNKNOWN") & (b != "UNKNOWN")
+    return {
+        "n_compared": int(np.sum(valid)),
+        "agreement": float(np.mean(a[valid] == b[valid])) if np.any(valid) else None,
+    }
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()

@@ -175,3 +175,20 @@ def test_sleep_staging_four_class_mapping():
     _, y, meta = SleepStaging("4class").get_data(_synthetic_dataset())
     assert y.tolist() == [0, 1, 1, 2, 3]
     assert meta["stage"].tolist() == ["W", "LIGHT", "LIGHT", "N3", "REM"]
+
+
+def test_official_isruc_rec_and_two_scorers_are_discovered(tmp_path):
+    from MetaSleepGuard.datasets.public_sleep.loaders import find_isruc_records, parse_isruc_labels
+
+    subject = tmp_path / "SubgroupI" / "1"
+    subject.mkdir(parents=True)
+    recording = subject / "1.rec"
+    recording.write_bytes(b"EDF")
+    scorer1 = subject / "1_1.txt"
+    scorer2 = subject / "1_2.txt"
+    scorer1.write_text("Epoch Stage\n0 0\n1 2\n2 5\n3 9\n", encoding="utf-8")
+    scorer2.write_text("0,0\n1,1\n2,5\n", encoding="utf-8")
+
+    assert find_isruc_records(tmp_path, scorer=1) == [(recording, scorer1)]
+    assert find_isruc_records(tmp_path, scorer=2) == [(recording, scorer2)]
+    assert parse_isruc_labels(scorer1) == ["W", "N2", "REM", "UNKNOWN"]

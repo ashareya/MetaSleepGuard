@@ -32,6 +32,7 @@ def evaluate_predictions(
     metrics = {
         "accuracy": float(accuracy_score(y_true, y_pred)),
         "macro_f1": float(f1_score(y_true, y_pred, labels=labels, average="macro", zero_division=0)),
+        "weighted_f1": float(f1_score(y_true, y_pred, labels=labels, average="weighted", zero_division=0)),
         "cohen_kappa": float(np.nan_to_num(kappa)),
         "per_class": {name: report[name] for name in classes if name in report},
         "confusion_matrix": confusion_matrix(y_true, y_pred, labels=labels).tolist(),

@@ -299,6 +299,7 @@ def write_baseline_outputs(output_root: Path, dataset: dict) -> dict[str, dict]:
             )
         _write_json(output_root / f"sleep_edf_{task}_metrics.json", metrics)
         _write_csv(output_root / f"sleep_edf_{task}_predictions.csv", predictions)
+        _write_csv(output_root / f"sleep_edf_{task}_fold_metrics.csv", metrics["fold_metrics"])
         results[task] = metrics
         split_rows = current_splits
     _write_csv(output_root / "sleep_edf_subject_split.csv", split_rows or [])

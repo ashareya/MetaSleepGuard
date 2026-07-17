@@ -183,6 +183,23 @@ def grouped_random_forest_baseline(
                 "confidence": float(confidence),
             }
         )
+    fold_metrics = []
+    for split in split_rows:
+        fold = int(split["fold"])
+        mask = fold_by_epoch == fold
+        fold_metrics.append(
+            {
+                "fold": fold,
+                "accuracy": float(accuracy_score(labels[mask], predictions[mask])),
+                "macro_f1": float(
+                    f1_score(labels[mask], predictions[mask], labels=classes, average="macro", zero_division=0)
+                ),
+                "n_test_epochs": int(np.sum(mask)),
+                "test_subject_ids": split["test_subject_ids"],
+            }
+        )
+    fold_accuracy = np.asarray([row["accuracy"] for row in fold_metrics], dtype=float)
+    fold_macro_f1 = np.asarray([row["macro_f1"] for row in fold_metrics], dtype=float)
     report = classification_report(labels, predictions, labels=classes, output_dict=True, zero_division=0)
     class_distribution = Counter(map(str, labels))
     metrics = {
@@ -220,6 +237,15 @@ def grouped_random_forest_baseline(
         },
         "confusion_matrix": confusion_matrix(labels, predictions, labels=classes).astype(int).tolist(),
         "folds": split_rows,
+        "fold_metrics": fold_metrics,
+        "fold_statistics": {
+            "accuracy_mean": float(np.mean(fold_accuracy)),
+            "accuracy_std": float(np.std(fold_accuracy, ddof=1)),
+            "accuracy_95ci": _mean_ci95(fold_accuracy),
+            "macro_f1_mean": float(np.mean(fold_macro_f1)),
+            "macro_f1_std": float(np.std(fold_macro_f1, ddof=1)),
+            "macro_f1_95ci": _mean_ci95(fold_macro_f1),
+        },
     }
     validate_metrics_schema(metrics)
     return metrics, prediction_rows, split_rows
@@ -255,6 +281,15 @@ def validate_metrics_schema(metrics: dict) -> None:
 
 def _safe_name(name: str) -> str:
     return "".join(ch if ch.isalnum() else "_" for ch in str(name)).strip("_").lower() or "channel"
+
+
+def _mean_ci95(values: np.ndarray) -> list[float]:
+    values = np.asarray(values, dtype=float)
+    mean = float(np.mean(values))
+    if values.size < 2:
+        return [mean, mean]
+    half_width = 1.96 * float(np.std(values, ddof=1)) / float(np.sqrt(values.size))
+    return [mean - half_width, mean + half_width]
 
 
 __all__ = [

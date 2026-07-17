@@ -160,3 +160,18 @@ def test_segmented_download_ranges_cover_file_once():
 def test_repository_and_output_roots_stay_inside_git_workspace():
     assert repo_root() == project_root()
     assert output_dir().is_relative_to(repo_root())
+
+
+def test_decision_evidence_working_points_and_artifacts():
+    from MetaSleepGuard.experiments.run_evidence_boost import run_artifact_injection, select_working_points
+
+    curve = [
+        {"threshold": 0.0, "coverage": 1.0, "risk": 0.3, "macro_f1": 0.6},
+        {"threshold": 0.5, "coverage": 0.8, "risk": 0.2, "macro_f1": 0.7},
+        {"threshold": 0.8, "coverage": 0.5, "risk": 0.1, "macro_f1": 0.8},
+    ]
+    points = select_working_points(curve)
+    assert [row["mode"] for row in points] == ["high_coverage", "balanced", "high_trust"]
+    artifacts = run_artifact_injection()
+    assert len(artifacts["rows"]) == 7
+    assert 0.0 <= artifacts["detection_recall"] <= 1.0

@@ -4,7 +4,8 @@
 
 - Project structure for datasets, preprocessing, features, models, quality, rejection, realtime, Brainstim, visualization, reports, experiments, tests, and docs.
 - Sleep-EDF and ISRUC loaders with canonical label mapping and synthetic smoke records.
-- Real Sleep-EDF validation covers 15 subjects and 15,029 valid 30-second epochs.
+- Real Sleep-EDF validation covers 30 subjects and 32,781 valid 30-second epochs.
+- Fixed-fold ablation evidence covers single/dual channel, causal context, probability calibration, and trusted rejection.
 - ISRUC has interface/structure tests; real ISRUC and cross-dataset metrics are not current evidence.
 - Standard preprocessing and 30-second epoching.
 - Baseline feature extraction and causal context using only the previous two epochs.

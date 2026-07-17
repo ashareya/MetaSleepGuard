@@ -3,6 +3,7 @@ param(
         "status", "prepare", "train", "evaluate", "cross", "audit", "replay", "realtime", "brainstim",
         "real-openbci-report", "openbci-file-replay", "submission-pack", "metrics-export", "demo-assets",
         "public-sleep-baseline", "public-sleep-eval", "cross-dataset-eval", "public-sleep-download", "public-sleep-real-baseline",
+        "isruc-download", "decision-evidence",
         "metabci-integration-test", "metabci-sleep-smoke", "report", "test"
     )]
     [string]$Task = "test",
@@ -124,6 +125,16 @@ try {
                 throw "-DataRoot must point to the Sleep-EDF download directory."
             }
             & $Python -m MetaSleepGuard.experiments.download_sleep_edf_subset --data-root $DataRoot --subjects $MaxSubjects
+        }
+        "isruc-download" {
+            $args = @("-m", "MetaSleepGuard.experiments.download_isruc", "--subjects", $MaxSubjects)
+            if ($DataRoot) { $args += @("--data-root", $DataRoot) }
+            & $Python @args
+        }
+        "decision-evidence" {
+            $args = @("-m", "MetaSleepGuard.experiments.run_evidence_boost", "--subjects", $MaxSubjects)
+            if ($DataRoot) { $args += @("--data-root", $DataRoot) }
+            & $Python @args
         }
         "public-sleep-real-baseline" {
             $args = @("-m", "MetaSleepGuard.experiments.run_public_sleep_real_baseline", "--subjects", $MaxSubjects)
