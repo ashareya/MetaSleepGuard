@@ -22,13 +22,23 @@ def cross_dataset_evaluate(
     test_records: Sequence[SleepRecord],
     task: str | int = "5class",
     random_state: int = 42,
+    require_model: str | None = None,
     **dataset_kwargs,
 ) -> dict:
     train_data = records_to_feature_dataset(train_records, task=task, **dataset_kwargs)
     test_data = records_to_feature_dataset(test_records, task=task, **dataset_kwargs)
     if train_data.feature_names != test_data.feature_names:
         raise ValueError("train and test datasets produced different feature schemas")
-    model, model_kind = build_classifier(random_state=random_state)
+    model, model_kind = build_classifier(random_state=random_state, require_model=require_model)
+    model_configuration = {
+        "model_kind": model_kind,
+        "random_state": random_state,
+        "parameters": model.get_params(deep=False),
+    }
+    if model_kind == "xgboost":
+        import xgboost
+
+        model_configuration["xgboost_version"] = xgboost.__version__
     model, calibration = fit_with_subject_calibration(
         model,
         train_data.X,
@@ -51,6 +61,7 @@ def cross_dataset_evaluate(
             "calibration": calibration,
             "train_synthetic_demo": bool(train_data.metadata.get("synthetic_demo")),
             "test_synthetic_demo": bool(test_data.metadata.get("synthetic_demo")),
+            "model_configuration": model_configuration,
             "train_subject_ids": sorted({record.subject_id for record in train_records}),
             "test_subject_ids": sorted({record.subject_id for record in test_records}),
         }

@@ -22,7 +22,7 @@
 
 ## Open Items
 
-- Install the optional XGBoost dependency before comparing an XGBoost ISRUC run with the verified RandomForest fallback; do not mix the two model families in one result table.
+- Keep the verified XGBoost and RandomForest ISRUC runs separate; neither model dominates every cross-dataset direction.
 - Run real Boruikang BDF/FIF audit once files are placed under `datasets/boruikang_files`.
 - Run real OpenBCI Cyton acquisition on the configured serial port.
 - Replace fallback RandomForest with XGBoost by installing `xgboost` in the `metabci` environment if missing.

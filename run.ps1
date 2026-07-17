@@ -19,6 +19,8 @@ param(
     [string]$SerialPort,
     [switch]$Synthetic,
     [int]$MaxSubjects = 15,
+    [ValidateSet("xgboost", "random_forest")]
+    [string]$RequireModel,
     [double]$DurationSec = 60,
     [string]$Python
 )
@@ -200,6 +202,7 @@ try {
         }
         "isruc-validation" {
             $args = @("-m", "MetaSleepGuard.experiments.run_isruc_validation", "--subjects", $MaxSubjects)
+            if ($RequireModel) { $args += @("--require-model", $RequireModel) }
             if ($IsrucRoot) { $args += @("--isruc-root", $IsrucRoot) }
             if ($SleepEdfRoot) { $args += @("--sleep-edf-root", $SleepEdfRoot) }
             & $Python @args

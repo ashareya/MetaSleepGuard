@@ -37,7 +37,7 @@ PROVENANCE = {
 }
 
 
-def grouped_validation(records, task: str, random_state: int = 42) -> dict:
+def grouped_validation(records, task: str, random_state: int = 42, require_model: str | None = None) -> dict:
     dataset = records_to_feature_dataset(records, task=task)
     subjects = np.asarray(dataset.subject_ids, dtype=str)
     unique_subjects = np.unique(subjects)
@@ -48,6 +48,7 @@ def grouped_validation(records, task: str, random_state: int = 42) -> dict:
     probabilities = np.zeros((dataset.y.size, len(dataset.classes)), dtype=float)
     folds = []
     model_kinds = []
+    model_configurations = []
     for fold, (train_index, test_index) in enumerate(
         splitter.split(dataset.X, dataset.y, groups=subjects), start=1
     ):
@@ -56,7 +57,19 @@ def grouped_validation(records, task: str, random_state: int = 42) -> dict:
         overlap = sorted(set(train_subjects) & set(test_subjects))
         if overlap:
             raise RuntimeError(f"subject leakage in fold {fold}: {overlap}")
-        model, model_kind = build_classifier(random_state + fold)
+        fold_seed = random_state + fold
+        model, model_kind = build_classifier(fold_seed, require_model=require_model)
+        configuration = {
+            "fold": fold,
+            "model_kind": model_kind,
+            "random_state": fold_seed,
+            "parameters": model.get_params(deep=False),
+        }
+        if model_kind == "xgboost":
+            import xgboost
+
+            configuration["xgboost_version"] = xgboost.__version__
+        model_configurations.append(configuration)
         train_mask = np.zeros(dataset.y.size, dtype=bool)
         train_mask[train_index] = True
         model, calibration = fit_with_subject_calibration(
@@ -92,6 +105,7 @@ def grouped_validation(records, task: str, random_state: int = 42) -> dict:
             "split_method": "GroupKFold(n_splits=5, group=subject_id)",
             "subject_overlap_in_any_fold": False,
             "model_kinds": sorted(set(model_kinds)),
+            "model_configurations": model_configurations,
             "folds": folds,
         }
     )
@@ -145,14 +159,14 @@ def write_metric_artifacts(run_dir: Path, name: str, metrics: dict) -> None:
         plt.close(figure)
 
 
-def execute_validation(isruc, sleep_edf, subjects: int, run_dir: Path) -> dict:
+def execute_validation(isruc, sleep_edf, subjects: int, run_dir: Path, require_model: str | None = None) -> dict:
     """Run both tasks and write artifacts; callers own status handling."""
 
     write_json(data_manifest(isruc), run_dir / "data_manifest.json")
-    summary = {**PROVENANCE, "n_subjects": subjects, "tasks": {}}
+    summary = {**PROVENANCE, "n_subjects": subjects, "required_model": require_model, "tasks": {}}
     for task in ("3class", "5class"):
-        internal = grouped_validation(isruc, task)
-        cross = bidirectional_cross_dataset(sleep_edf, isruc, task=task)
+        internal = grouped_validation(isruc, task, require_model=require_model)
+        cross = bidirectional_cross_dataset(sleep_edf, isruc, task=task, require_model=require_model)
         cross["provenance"] = PROVENANCE
         write_metric_artifacts(run_dir, f"isruc_internal_{task}", internal)
         for direction, metrics in cross.items():
@@ -177,6 +191,7 @@ def main() -> None:
     parser.add_argument("--isruc-root", default=str(repo_root() / "data/public_sleep/isruc_raw/nemar_v1_0_1"))
     parser.add_argument("--sleep-edf-root", default=str(repo_root() / "data/public_sleep/sleep_edf_raw"))
     parser.add_argument("--subjects", type=int, default=15)
+    parser.add_argument("--require-model", choices=["xgboost", "random_forest"], default=None)
     args = parser.parse_args()
     if args.subjects < 5:
         raise SystemExit("formal ISRUC validation requires at least five subjects")
@@ -202,7 +217,7 @@ def main() -> None:
         print(f"isruc_validation_status={status_path}")
         raise
     try:
-        summary = execute_validation(isruc, sleep_edf, args.subjects, run_dir)
+        summary = execute_validation(isruc, sleep_edf, args.subjects, run_dir, require_model=args.require_model)
     except Exception as exc:
         write_json(
             {

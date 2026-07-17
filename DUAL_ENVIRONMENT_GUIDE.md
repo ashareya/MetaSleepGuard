@@ -4,7 +4,7 @@
 
 Python：
 
-    C:\Users\ZYH\anaconda3\envs\metabci\python.exe
+    <conda-root>\envs\metabci\python.exe
 
 Main functions：
 
@@ -22,7 +22,7 @@ Main functions：
 
 Python：
 
-    C:\Users\ZYH\anaconda3\envs\metabci_stim\python.exe
+    <conda-root>\envs\metabci_stim\python.exe
 
 Main functions：
 
@@ -35,8 +35,8 @@ Main functions：
 
 ## Commands
 
-    $py = "C:\Users\ZYH\anaconda3\envs\metabci\python.exe"
-    $stimPy = "C:\Users\ZYH\anaconda3\envs\metabci_stim\python.exe"
+    $py = "<conda-root>\envs\metabci\python.exe"
+    $stimPy = "<conda-root>\envs\metabci_stim\python.exe"
 
     .\run.ps1 -Task status -Python $py
     .\run.ps1 -Task test -Python $py
@@ -51,7 +51,7 @@ Main functions：
 - Brainstim environment imports `psychopy` and `metabci.brainstim`.
 - MetaBCI integration test passes.
 - Brainstim dry-run passes.
-- Automated test result: 77 passed, 0 failed.
+- Automated test result: 78 passed, 0 failed.
 
 ## Design Rationale
 

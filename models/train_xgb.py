@@ -116,8 +116,19 @@ def records_to_feature_dataset(
     )
 
 
-def build_classifier(random_state: int = 42):
+def build_classifier(random_state: int = 42, require_model: str | None = None):
     """Create an XGBoost classifier, falling back to sklearn when unavailable."""
+
+    if require_model not in {None, "xgboost", "random_forest"}:
+        raise ValueError(f"unsupported required model: {require_model}")
+    if require_model == "random_forest":
+        return RandomForestClassifier(
+            n_estimators=250,
+            max_depth=None,
+            class_weight="balanced",
+            random_state=random_state,
+            n_jobs=-1,
+        ), "sklearn_random_forest_fallback"
 
     try:
         from xgboost import XGBClassifier  # type: ignore
@@ -128,12 +139,13 @@ def build_classifier(random_state: int = 42):
             learning_rate=0.05,
             subsample=0.9,
             colsample_bytree=0.9,
-            objective="multi:softprob",
             eval_metric="mlogloss",
             tree_method="hist",
             random_state=random_state,
         ), "xgboost"
     except Exception as exc:
+        if require_model == "xgboost":
+            raise RuntimeError(f"required XGBoost model is unavailable or incompatible: {exc}") from exc
         LOGGER.warning("xgboost is unavailable or incompatible (%s); using RandomForestClassifier fallback", exc)
         return RandomForestClassifier(
             n_estimators=250,

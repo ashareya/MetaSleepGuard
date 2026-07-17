@@ -22,6 +22,7 @@ from MetaSleepGuard.experiments.download_isruc import (
 from MetaSleepGuard.datasets.public_sleep.loaders import find_isruc_records, parse_isruc_bids_events
 from MetaSleepGuard.experiments.common import output_dir, project_root, repo_root
 from MetaSleepGuard.experiments.run_public_sleep_real_baseline import _limitations, _readme
+from MetaSleepGuard.models.train_xgb import build_classifier
 
 
 def test_sleep_edf_raw_label_mapping():
@@ -270,3 +271,19 @@ def test_nemar_bids_events_and_pair_discovery(tmp_path):
     first, second = parse_isruc_bids_events(events)
     assert first == ["W", "N2", "N2", "REM"]
     assert second == ["W", "N3", "N3", "REM"]
+
+
+def test_required_xgboost_never_silently_falls_back():
+    import sys
+
+    with patch.dict(sys.modules, {"xgboost": None}):
+        try:
+            build_classifier(42, require_model="xgboost")
+        except RuntimeError as exc:
+            assert "required XGBoost" in str(exc)
+        else:
+            raise AssertionError("required XGBoost unexpectedly fell back")
+
+    model, kind = build_classifier(42, require_model="random_forest")
+    assert kind == "sklearn_random_forest_fallback"
+    assert model.random_state == 42
