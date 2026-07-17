@@ -45,5 +45,5 @@ Purpose:
 
 This test is not a sleep-staging accuracy validation unless PSG/expert 30-second labels are available. If the subject does not clearly sleep, the report must state:
 
-> 本次实验为午睡场景连续采集测试，被试未确认进入睡眠，主要用于验证 OpenBCI 实时采集、信号质量评估、滑窗推理和报告生成流程，不作为睡眠分期准确率验证依据。
+> 本次实验为午睡场景连续采集测试,被试未确认进入睡眠,主要用于验证 OpenBCI 实时采集、信号质量评估、滑窗推理和报告生成流程,不作为睡眠分期准确率验证依据。
 

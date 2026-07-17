@@ -19,15 +19,15 @@ class TaskEvent:
 
 
 DEFAULT_EVENTS = [
-    TaskEvent("eyes_open_adapt", "睁眼适应，保持放松", 60),
-    TaskEvent("eyes_open_rest_1", "睁眼静息，请注视屏幕中央", 120),
-    TaskEvent("eyes_closed_rest_1", "闭眼静息，保持清醒放松", 120),
-    TaskEvent("eyes_open_rest_2", "睁眼静息，请减少眨眼", 120),
-    TaskEvent("eyes_closed_rest_2", "闭眼静息，保持身体稳定", 120),
+    TaskEvent("eyes_open_adapt", "睁眼适应,保持放松", 60),
+    TaskEvent("eyes_open_rest_1", "睁眼静息,请注视屏幕中央", 120),
+    TaskEvent("eyes_closed_rest_1", "闭眼静息,保持清醒放松", 120),
+    TaskEvent("eyes_open_rest_2", "睁眼静息,请减少眨眼", 120),
+    TaskEvent("eyes_closed_rest_2", "闭眼静息,保持身体稳定", 120),
     TaskEvent("blink", "请连续眨眼", 15),
-    TaskEvent("clench_teeth", "请轻咬牙，随后放松", 15),
+    TaskEvent("clench_teeth", "请轻咬牙,随后放松", 15),
     TaskEvent("turn_head", "请缓慢左右转头", 15),
-    TaskEvent("move_cable", "请轻移动电极线，制造接触伪迹", 15),
+    TaskEvent("move_cable", "请轻移动电极线,制造接触伪迹", 15),
 ]
 
 

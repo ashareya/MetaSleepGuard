@@ -307,9 +307,9 @@ def _conclusions(rows: list[dict], points: list[dict], artifacts: dict) -> str:
     )
     return f"""# 当前结论与证据边界
 
-- 本页消融结果来自15名Sleep-EDF真实被试，并使用完全相同的GroupKFold被试划分。
-- 当前Macro-F1最高配置为`{best['configuration']}`，Macro-F1={best['macro_f1']:.4f}。
-- 概率校准使用训练折内部留出的被试，不接触测试被试。
+- 本页消融结果来自15名Sleep-EDF真实被试,并使用完全相同的GroupKFold被试划分。
+- 当前Macro-F1最高配置为`{best['configuration']}`,Macro-F1={best['macro_f1']:.4f}。
+- 概率校准使用训练折内部留出的被试,不接触测试被试。
 - OpenBCI数据不参与本页睡眠分期准确率计算。
 
 ## 可信拒识工作点
@@ -318,13 +318,13 @@ def _conclusions(rows: list[dict], points: list[dict], artifacts: dict) -> str:
 
 ## 可控伪迹
 
-- 伪迹检测召回率：{artifacts['detection_recall']:.3f}
-- 干净样本误报计数：{artifacts['clean_false_positive_rate']:.0f}
-- 伪迹注入只验证质量规则，不作为睡眠分期准确率证据。
+- 伪迹检测召回率:{artifacts['detection_recall']:.3f}
+- 干净样本误报计数:{artifacts['clean_false_positive_rate']:.0f}
+- 伪迹注入只验证质量规则,不作为睡眠分期准确率证据。
 
 ## ISRUC
 
-只有真实ISRUC文件完成加载和复测后，才加入ISRUC内部与跨数据集指标。
+只有真实ISRUC文件完成加载和复测后,才加入ISRUC内部与跨数据集指标。
 """
 
 

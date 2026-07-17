@@ -1,7 +1,7 @@
 project:
   name: MetaSleep-Guard
   license: GPL-2.0
-  metabci_note: 保留 MetaBCI 相关许可证说明；本项目新增代码按 GPL-2.0 组织。
+  metabci_note: 保留 MetaBCI 相关许可证说明;本项目新增代码按 GPL-2.0 组织。
 
 paths:
   sleep_edf_root: datasets/public_sleep/Sleep-EDF

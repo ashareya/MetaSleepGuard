@@ -61,7 +61,7 @@ class OpenBCISegment:
     def summary(self) -> dict:
         return {
             "file_name": self.path.name,
-            "source_path": str(self.path),
+            "source_path": self.path.name,
             "file_size_bytes": self.path.stat().st_size,
             "sample_rate_hz": self.header.sample_rate,
             "declared_exg_channels": self.header.number_of_channels,
@@ -507,7 +507,7 @@ def _quality_result(
         "quality_score": 100 - penalties[grade],
         "quality_flags": "|".join(unique_flags),
         "usable_for_window_inference": bool(accepted),
-        "trusted_output": "可进入模型（本报告不输出睡眠阶段）" if accepted else "暂不判定",
+        "trusted_output": "可进入模型(本报告不输出睡眠阶段)" if accepted else "暂不判定",
         **metrics,
     }
 

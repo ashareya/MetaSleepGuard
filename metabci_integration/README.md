@@ -4,29 +4,29 @@ This directory contains the explicit MetaBCI integration boundary for MetaSleep-
 
 ## Components
 
-- `metabci_component_check.py`：discovers the locally available MetaBCI module tree.
-- `metabci_brainflow_adapter.py`：imports MetaBCI BrainFlow and exercises RingBuffer.
-- `metabci_brainda_adapter.py`：imports MetaBCI Brainda and verifies subject-level split behavior.
-- `metabci_brainstim_adapter.py`：checks Brainstim availability and connects the project calibration workflow to the MetaBCI Brainstim runtime boundary.
+- `metabci_component_check.py`:discovers the locally available MetaBCI module tree.
+- `metabci_brainflow_adapter.py`:imports MetaBCI BrainFlow and exercises RingBuffer.
+- `metabci_brainda_adapter.py`:imports MetaBCI Brainda and verifies subject-level split behavior.
+- `metabci_brainstim_adapter.py`:checks Brainstim availability and connects the project calibration workflow to the MetaBCI Brainstim runtime boundary.
 
 ## Two Runtime Environments
 
 ### Analysis
 
-    C:\Users\ZYH\anaconda3\envs\metabci\python.exe
+    <conda-root>\envs\metabci\python.exe
 
 Used for BrainFlow, Brainda, Sleep-EDF analysis, quality auditing, reports, and automated testing.
 
 ### Brainstim
 
-    C:\Users\ZYH\anaconda3\envs\metabci_stim\python.exe
+    <conda-root>\envs\metabci_stim\python.exe
 
 Used for PsychoPy, MetaBCI Brainstim, visual stimulation, calibration, and event markers.
 
 ## Verification Commands
 
-    $py = "C:\Users\ZYH\anaconda3\envs\metabci\python.exe"
-    $stimPy = "C:\Users\ZYH\anaconda3\envs\metabci_stim\python.exe"
+    $py = "<conda-root>\envs\metabci\python.exe"
+    $stimPy = "<conda-root>\envs\metabci_stim\python.exe"
 
     .\run.ps1 -Task status -Python $py
     .\run.ps1 -Task metabci-integration-test -Python $py

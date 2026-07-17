@@ -133,9 +133,9 @@ def generate_ten_minute_report(input_dir: str | Path, output_dir: str | Path) ->
         "device": formal.header.board,
         "experiment": "Fp1/Fp2 前额双导脑电质量标定实验",
         **config_meta,
-        "formal_data_file": str(formal_path),
-        "debug_short_file": str(debug_path),
-        "debug_file_role": "调试短文件，不用于正式报告主体分析",
+        "formal_data_file": formal_path.name,
+        "debug_short_file": debug_path.name,
+        "debug_file_role": "调试短文件,不用于正式报告主体分析",
         "sample_rate_hz": formal.header.sample_rate,
         "declared_exg_channels": formal.header.number_of_channels,
         "effective_channels": list(ACTIVE_GUI_CHANNELS),
@@ -159,7 +159,7 @@ def generate_ten_minute_report(input_dir: str | Path, output_dir: str | Path) ->
         "artifact_detection_counts": _flag_counts(stage_table),
         "quality_rules": QUALITY_RULES,
         "rejected_stages": stage_table.loc[~stage_table["usable_for_window_inference"], "stage_name"].tolist(),
-        "figures": {key: str(value) for key, value in figures.items()},
+        "figures": {key: str(Path("figures") / value.name) for key, value in figures.items()},
         "statement_boundary": [
             "真实 OpenBCI Cyton Fp1/Fp2 双导采集链路可用",
             "用于信号质量审计、伪迹识别、可信拒识和自动报告",
@@ -243,7 +243,7 @@ def generate_sixty_minute_report(input_dir: str | Path, output_dir: str | Path) 
         "effective_channels": list(ACTIVE_GUI_CHANNELS),
         "effective_exg_columns": list(ACTIVE_EXG_COLUMNS),
         "segment_count": len(segments),
-        "segment_files": [str(path) for path in raw_paths],
+        "segment_files": [path.name for path in raw_paths],
         "unexpected_nonzero_inactive_channels_by_segment": {
             segment.path.name: segment.unexpected_nonzero_inactive_channels
             for segment in segments
@@ -269,13 +269,13 @@ def generate_sixty_minute_report(input_dir: str | Path, output_dir: str | Path) 
         "artifact_detection_counts": _flag_counts(window_table),
         "quality_rules": QUALITY_RULES,
         "stage_quality_statistics": stage_stats,
-        "figures": {key: str(value) for key, value in figures.items()},
+        "figures": {key: str(Path("figures") / value.name) for key, value in figures.items()},
         "statement_boundary": [
             "完成 60 分钟午睡/闭眼休息场景真实采集流程",
-            "OpenBCI 原始数据大部分覆盖正式实验区间，但存在短暂丢包和数据中断",
+            "OpenBCI 原始数据大部分覆盖正式实验区间,但存在短暂丢包和数据中断",
             "低覆盖或严重异常窗口输出暂不判定",
             "用于连续采集、质量审计、30 秒滑窗、可信拒识和自动报告验证",
-            "无 PSG 和专家 30 秒睡眠标签，不作为睡眠分期准确率依据",
+            "无 PSG 和专家 30 秒睡眠标签,不作为睡眠分期准确率依据",
         ],
     }
     _write_json(summary, output_dir / "summary.json")
@@ -489,24 +489,24 @@ def _ten_markdown(summary: dict, table: pd.DataFrame, formal: OpenBCISegment, de
 
 ## 实验基本信息
 
-- 数据性质：OpenBCI Cyton + OpenBCI GUI 真实采集数据。
-- 实验定位：Fp1/Fp2 前额双导脑电质量标定，不是 O1/O2 枕区实验，不主张闭眼 Alpha 验证成功。
-- 被试编号：{summary['subject_id']}；操作者：{summary['operator']}；运行模式：{summary['run_mode']}；点位方案：{summary['montage']}。
-- 正式原始文件：`{Path(summary['formal_data_file']).name}`。
-- 调试短文件：`{Path(summary['debug_short_file']).name}`，时长 {debug.duration_sec:.3f} 秒，不进入正式主体分析。
-- 设备：`{formal.header.board}`；采样率：{formal.header.sample_rate:.0f} Hz；声明 EXG 通道数：{formal.header.number_of_channels}。
-- 有效通道：GUI Ch2/Fp1 与 Ch7/Fp2，对应 TXT 的 `EXG Channel 1`、`EXG Channel 6`。
-- 关闭通道：{', '.join(summary['inactive_exg_channels']) or '无'}；关闭通道不参与质量评分。
-- 停用通道非零活动：{', '.join(summary['unexpected_nonzero_inactive_channels']) or '未发现'}。
+- 数据性质:OpenBCI Cyton + OpenBCI GUI 真实采集数据。
+- 实验定位:Fp1/Fp2 前额双导脑电质量标定,不是 O1/O2 枕区实验,不主张闭眼 Alpha 验证成功。
+- 被试编号:{summary['subject_id']};操作者:{summary['operator']};运行模式:{summary['run_mode']};点位方案:{summary['montage']}。
+- 正式原始文件:`{Path(summary['formal_data_file']).name}`。
+- 调试短文件:`{Path(summary['debug_short_file']).name}`,时长 {debug.duration_sec:.3f} 秒,不进入正式主体分析。
+- 设备:`{formal.header.board}`;采样率:{formal.header.sample_rate:.0f} Hz;声明 EXG 通道数:{formal.header.number_of_channels}。
+- 有效通道:GUI Ch2/Fp1 与 Ch7/Fp2,对应 TXT 的 `EXG Channel 1`、`EXG Channel 6`。
+- 关闭通道:{', '.join(summary['inactive_exg_channels']) or '无'};关闭通道不参与质量评分。
+- 停用通道非零活动:{', '.join(summary['unexpected_nonzero_inactive_channels']) or '未发现'}。
 
 ## 时间对齐与覆盖
 
-- 事件区间：{summary['experiment_start']} 至 {summary['experiment_end']}，600 秒。
-- 正式数据区间：{summary['data_start']} 至 {summary['data_end']}。
+- 事件区间:{summary['experiment_start']} 至 {summary['experiment_end']},600 秒。
+- 正式数据区间:{summary['data_start']} 至 {summary['data_end']}。
 - 数据相对事件开始晚 {summary['event_to_data_start_offset_sec']:.3f} 秒。
-- 事件日志共 {summary['event_log_integrity']['row_count']} 行；首尾时长校验：{summary['event_log_integrity']['complete']}。
-- 正式区间时间覆盖 {summary['temporal_coverage_sec']:.3f} 秒，覆盖率 {summary['coverage_ratio']:.3%}。
-- 样本完整率 {summary['sample_completeness_ratio']:.3%}；逐行 GUI 时间戳抖动不被单独解释为文件中断。
+- 事件日志共 {summary['event_log_integrity']['row_count']} 行;首尾时长校验:{summary['event_log_integrity']['complete']}。
+- 正式区间时间覆盖 {summary['temporal_coverage_sec']:.3f} 秒,覆盖率 {summary['coverage_ratio']:.3%}。
+- 样本完整率 {summary['sample_completeness_ratio']:.3%};逐行 GUI 时间戳抖动不被单独解释为文件中断。
 
 ## 各阶段质量
 
@@ -516,13 +516,13 @@ def _ten_markdown(summary: dict, table: pd.DataFrame, formal: OpenBCISegment, de
 
 {_markdown_table(comparisons)}
 
-以上仅比较前额双导信号幅值、工频比例和质量等级，不作 Alpha 增强结论。
+以上仅比较前额双导信号幅值、工频比例和质量等级,不作 Alpha 增强结论。
 
 ## 诱发伪迹阶段
 
 {_markdown_table(artifact)}
 
-眨眼、咬牙、转头和动线是按事件日志主动诱发的质量案例，统一作为 C 级质量案例并拒绝进入可信推理历史。
+眨眼、咬牙、转头和动线是按事件日志主动诱发的质量案例,统一作为 C 级质量案例并拒绝进入可信推理历史。
 
 ## 异常检测汇总
 
@@ -530,18 +530,18 @@ def _ten_markdown(summary: dict, table: pd.DataFrame, formal: OpenBCISegment, de
 
 ## 质量规则
 
-- 时间覆盖率或样本完整率低于 80%：D 级并暂不判定。
-- 强工频比阈值：0.5；一般工频比阈值：0.2。
-- 滤波后 99% 绝对幅值超过 500 µV 或差分 99% 超过 50 µV：运动伪迹候选。
-- 协议规定的眨眼、咬牙、转头、动线阶段固定作为 C 级质量案例，不进入可信历史。
+- 时间覆盖率或样本完整率低于 80%:D 级并暂不判定。
+- 强工频比阈值:0.5;一般工频比阈值:0.2。
+- 滤波后 99% 绝对幅值超过 500 µV 或差分 99% 超过 50 µV:运动伪迹候选。
+- 协议规定的眨眼、咬牙、转头、动线阶段固定作为 C 级质量案例,不进入可信历史。
 
 ## 结论与边界
 
 1. 真实 OpenBCI Cyton 对 Fp1/Fp2 前额双导的采集、文件保存和时间对齐链路可用。
-2. 本实验可用于工频、漂移、异常幅值、运动伪迹、平线、饱和和中断检测，以及主动拒识验证。
-3. C/D 级阶段输出“暂不判定”；A/B 级阶段仅表示信号可进入后续模型，本报告不输出睡眠阶段。
-4. 本实验没有 PSG 和专家 30 秒睡眠标签，不用于睡眠分期准确率验证。
-5. 不声称 Alpha 验证成功；公开 Sleep-EDF/ISRUC 才用于分期准确率验证。
+2. 本实验可用于工频、漂移、异常幅值、运动伪迹、平线、饱和和中断检测,以及主动拒识验证。
+3. C/D 级阶段输出"暂不判定";A/B 级阶段仅表示信号可进入后续模型,本报告不输出睡眠阶段。
+4. 本实验没有 PSG 和专家 30 秒睡眠标签,不用于睡眠分期准确率验证。
+5. 不声称 Alpha 验证成功;公开 Sleep-EDF/ISRUC 才用于分期准确率验证。
 """
 
 
@@ -549,7 +549,7 @@ def _sixty_markdown(summary: dict, segment_table: pd.DataFrame, gap_table: pd.Da
     affected = windows[windows["window_index"].isin(summary["affected_window_indices"])][
         ["window_index", "stage", "coverage_ratio", "sample_completeness_ratio", "effective_data_ratio", "quality_grade", "quality_flags", "trusted_output"]
     ]
-    inactive_activity = "；".join(
+    inactive_activity = ";".join(
         f"{file_name}: {', '.join(channels)}"
         for file_name, channels in summary["unexpected_nonzero_inactive_channels_by_segment"].items()
     ) or "未发现"
@@ -557,14 +557,14 @@ def _sixty_markdown(summary: dict, segment_table: pd.DataFrame, gap_table: pd.Da
 
 ## 实验基本信息
 
-- 数据性质：OpenBCI Cyton + OpenBCI GUI 真实采集数据。
-- 点位：Fp1/Fp2 前额双导；有效通道为 GUI Ch2、Ch7。
-- 被试编号：{summary['subject_id']}；操作者：{summary['operator']}；运行模式：{summary['run_mode']}；点位方案：{summary['montage']}。
-- 正式实验区间：{summary['experiment_start']} 至 {summary['experiment_end']}，3600 秒，理论 30 秒窗口 120 个。
-- 原始数据由 {summary['segment_count']} 个文件片段组成，不对片段间缺口进行插值。
-- 事件日志完整性：{summary['event_log_integrity']['complete']}；30 秒窗口日志完整性：{summary['window_log_integrity']['complete']}（{summary['window_log_integrity']['row_count']} 行）。
-- 配置禁用通道始终不参与质量评分；短片段中的非零禁用通道活动单独记录在分段表与 summary 中。
-- 禁用通道异常活动：{inactive_activity}。这些通道未进入双导波形、质量评分或拒识判断。
+- 数据性质:OpenBCI Cyton + OpenBCI GUI 真实采集数据。
+- 点位:Fp1/Fp2 前额双导;有效通道为 GUI Ch2、Ch7。
+- 被试编号:{summary['subject_id']};操作者:{summary['operator']};运行模式:{summary['run_mode']};点位方案:{summary['montage']}。
+- 正式实验区间:{summary['experiment_start']} 至 {summary['experiment_end']},3600 秒,理论 30 秒窗口 120 个。
+- 原始数据由 {summary['segment_count']} 个文件片段组成,不对片段间缺口进行插值。
+- 事件日志完整性:{summary['event_log_integrity']['complete']};30 秒窗口日志完整性:{summary['window_log_integrity']['complete']}({summary['window_log_integrity']['row_count']} 行)。
+- 配置禁用通道始终不参与质量评分;短片段中的非零禁用通道活动单独记录在分段表与 summary 中。
+- 禁用通道异常活动:{inactive_activity}。这些通道未进入双导波形、质量评分或拒识判断。
 
 ## 原始文件片段
 
@@ -572,23 +572,23 @@ def _sixty_markdown(summary: dict, segment_table: pd.DataFrame, gap_table: pd.Da
 
 ## 数据覆盖与中断
 
-- 时间覆盖：{summary['temporal_coverage_sec']:.3f} 秒，覆盖率 {summary['coverage_ratio']:.3%}。
-- 缺失时长：{summary['missing_duration_sec']:.3f} 秒，共 {summary['gap_count']} 个文件级缺口。
-- 样本完整率：{summary['sample_completeness_ratio']:.3%}，与时间覆盖率分开报告。
+- 时间覆盖:{summary['temporal_coverage_sec']:.3f} 秒,覆盖率 {summary['coverage_ratio']:.3%}。
+- 缺失时长:{summary['missing_duration_sec']:.3f} 秒,共 {summary['gap_count']} 个文件级缺口。
+- 样本完整率:{summary['sample_completeness_ratio']:.3%},与时间覆盖率分开报告。
 
 {_markdown_table(gap_table)}
 
 ## 受影响窗口
 
-文件级时间缺口直接影响窗口：{', '.join(map(str, summary['file_gap_affected_window_indices']))}。
+文件级时间缺口直接影响窗口:{', '.join(map(str, summary['file_gap_affected_window_indices']))}。
 
-样本完整率低于 95% 的窗口：{', '.join(map(str, summary['sample_incomplete_window_indices']))}。
+样本完整率低于 95% 的窗口:{', '.join(map(str, summary['sample_incomplete_window_indices']))}。
 
-两类问题合并后的受影响窗口：{', '.join(map(str, summary['affected_window_indices']))}。
+两类问题合并后的受影响窗口:{', '.join(map(str, summary['affected_window_indices']))}。
 
 {_markdown_table(affected)}
 
-所有覆盖不足 80%、严重中断、平线、饱和或严重运动伪迹窗口均输出“暂不判定”。
+所有覆盖不足 80%、严重中断、平线、饱和或严重运动伪迹窗口均输出"暂不判定"。
 
 ## 分阶段质量统计
 
@@ -600,17 +600,17 @@ def _sixty_markdown(summary: dict, segment_table: pd.DataFrame, gap_table: pd.Da
 
 ## 质量规则
 
-- 时间覆盖率或样本完整率低于 80%：D 级并暂不判定。
-- 文件级覆盖与样本完整率分别计算，有效数据比例取两者较小值。
-- 强工频、严重运动或异常幅值为 C 级并暂不判定；平线、饱和、零方差为 D 级。
+- 时间覆盖率或样本完整率低于 80%:D 级并暂不判定。
+- 文件级覆盖与样本完整率分别计算,有效数据比例取两者较小值。
+- 强工频、严重运动或异常幅值为 C 级并暂不判定;平线、饱和、零方差为 D 级。
 
 ## 结论与边界
 
-1. 已完成 60 分钟午睡/闭眼休息场景采集，事件日志和 120 个 30 秒窗口日志完整。
-2. OpenBCI 原始数据覆盖大部分正式区间，但中间存在真实文件级缺口，不能写成“全程无丢包”。
-3. 缺失和严重低质量窗口已标为“暂不判定”，不会进入可信历史特征。
+1. 已完成 60 分钟午睡/闭眼休息场景采集,事件日志和 120 个 30 秒窗口日志完整。
+2. OpenBCI 原始数据覆盖大部分正式区间,但中间存在真实文件级缺口,不能写成"全程无丢包"。
+3. 缺失和严重低质量窗口已标为"暂不判定",不会进入可信历史特征。
 4. 该实验验证连续采集、文件兼容、质量审计、30 秒滑窗、数据中断检测、可信拒识和自动报告。
-5. “自然午睡 / 闭眼休息”是实验场景名称；无 PSG、无专家睡眠标签，不作为睡眠分期准确率依据，不能声称被试已进入睡眠或验证了睡眠分期准确率。
+5. "自然午睡 / 闭眼休息"是实验场景名称;无 PSG、无专家睡眠标签,不作为睡眠分期准确率依据,不能声称被试已进入睡眠或验证了睡眠分期准确率。
 6. 公开 Sleep-EDF/ISRUC 才用于睡眠分期准确率验证。
 """
 
@@ -665,7 +665,7 @@ figure{{margin:24px 0}} img{{max-width:100%;border:1px solid #ccd5df}} .notice{{
 <h2>完整质量明细</h2>
 <div style="overflow-x:auto">{table.to_html(index=False, border=0)}</div>
 <h2>图表</h2>{figure_html}
-<p class="notice">本报告基于真实 OpenBCI 数据，但无 PSG 与专家睡眠标签；不得用于声称睡眠分期准确率或被试已进入睡眠。</p>
+<p class="notice">本报告基于真实 OpenBCI 数据,但无 PSG 与专家睡眠标签;不得用于声称睡眠分期准确率或被试已进入睡眠。</p>
 </body></html>"""
 
 
@@ -682,7 +682,7 @@ def _write_manifest(input_dir: Path, output: Path, role_overrides: dict[str, str
         }
         rows.append(
             {
-                "source_path": str(path),
+                "source_path": path.name,
                 "file_name": path.name,
                 "role": role,
                 "used_in_formal_analysis": used,
@@ -791,7 +791,7 @@ def _save_figure(fig, output: Path) -> Path:
 
 def _markdown_table(frame: pd.DataFrame) -> str:
     if frame.empty:
-        return "（无）"
+        return "(无)"
     display = frame.copy()
     for column in display.select_dtypes(include=["float"]).columns:
         display[column] = display[column].map(lambda value: f"{value:.4f}" if pd.notna(value) else "")
@@ -845,23 +845,23 @@ def _real_data_readme(ten_result: dict, sixty_result: dict) -> str:
     sixty = sixty_result["summary"]
     return f"""# SX Real OpenBCI Reports
 
-本目录只包含 2026-06-27 OpenBCI Cyton + OpenBCI GUI 真实实验报告，不把 synthetic 数据作为正式结果。
+本目录只包含 2026-06-27 OpenBCI Cyton + OpenBCI GUI 真实实验报告,不把 synthetic 数据作为正式结果。
 
 ## 报告
 
-- 10 分钟 Fp1/Fp2 质量标定：[HTML](ten_min_quality_calibration/report.html) / [Markdown](ten_min_quality_calibration/report.md)
-- 60 分钟午睡/闭眼休息连续采集：[HTML](sixty_min_continuous_recording/report.html) / [Markdown](sixty_min_continuous_recording/report.md)
+- 10 分钟 Fp1/Fp2 质量标定:[HTML](ten_min_quality_calibration/report.html) / [Markdown](ten_min_quality_calibration/report.md)
+- 60 分钟午睡/闭眼休息连续采集:[HTML](sixty_min_continuous_recording/report.html) / [Markdown](sixty_min_continuous_recording/report.md)
 
-10 分钟正式文件：`{Path(ten['formal_data_file']).name}`；调试短文件：`{Path(ten['debug_short_file']).name}`。
+10 分钟正式文件:`{Path(ten['formal_data_file']).name}`;调试短文件:`{Path(ten['debug_short_file']).name}`。
 
-60 分钟时间覆盖率：{sixty['coverage_ratio']:.3%}；文件级缺失时长：{sixty['missing_duration_sec']:.3f} 秒；文件级缺口窗口：{', '.join(map(str, sixty['file_gap_affected_window_indices']))}；全部受影响窗口：{', '.join(map(str, sixty['affected_window_indices']))}。
+60 分钟时间覆盖率:{sixty['coverage_ratio']:.3%};文件级缺失时长:{sixty['missing_duration_sec']:.3f} 秒;文件级缺口窗口:{', '.join(map(str, sixty['file_gap_affected_window_indices']))};全部受影响窗口:{', '.join(map(str, sixty['affected_window_indices']))}。
 
 ## 允许写入比赛材料
 
 - 完成真实 OpenBCI Cyton Fp1/Fp2 双导采集链路与文件兼容验证。
 - 完成 30 秒窗口完整性、信号质量、数据中断、主动拒识和自动报告验证。
 - 10 分钟实验提供睁眼、闭眼及主动诱发伪迹质量案例。
-- 60 分钟正式区间大部分有数据覆盖，中间存在明确缺口，受影响窗口已拒识。
+- 60 分钟正式区间大部分有数据覆盖,中间存在明确缺口,受影响窗口已拒识。
 
 ## 禁止结论
 

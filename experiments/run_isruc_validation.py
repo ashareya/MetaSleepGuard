@@ -125,10 +125,22 @@ def data_manifest(records) -> dict:
                 "label_epochs": len(record.labels),
                 "valid_epochs": len(valid),
                 "class_distribution": {stage: valid.count(stage) for stage in ("W", "N1", "N2", "N3", "REM")},
-                "metadata": record.metadata,
+                "metadata": _portable_metadata(record.metadata),
             }
         )
     return {**PROVENANCE, "n_subjects": len(rows), "subjects": rows}
+
+
+def _portable_metadata(value, key: str = ""):
+    """Remove machine-specific directory prefixes from exported manifests."""
+
+    if isinstance(value, dict):
+        return {name: _portable_metadata(item, name) for name, item in value.items()}
+    if isinstance(value, list):
+        return [_portable_metadata(item, key) for item in value]
+    if isinstance(value, str) and ("path" in key.lower() or "file" in key.lower()):
+        return Path(value).name
+    return value
 
 
 def write_metric_artifacts(run_dir: Path, name: str, metrics: dict) -> None:

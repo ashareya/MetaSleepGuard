@@ -2,11 +2,11 @@
 
 ## Environment A: metabci
 
-Python：
+Python:
 
     <conda-root>\envs\metabci\python.exe
 
-Main functions：
+Main functions:
 
 - MetaBCI BrainFlow
 - MetaBCI Brainda
@@ -20,11 +20,11 @@ Main functions：
 
 ## Environment B: metabci_stim
 
-Python：
+Python:
 
     <conda-root>\envs\metabci_stim\python.exe
 
-Main functions：
+Main functions:
 
 - MetaBCI Brainstim
 - PsychoPy

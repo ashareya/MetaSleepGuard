@@ -31,7 +31,7 @@ def main() -> None:
     ]
     path = generate_html_report(
         create_run_dir("reports") / "demo_report.html",
-        {"mode": "demo", "device": "synthetic", "note": "占位演示报告，不代表真实准确率"},
+        {"mode": "demo", "device": "synthetic", "note": "占位演示报告,不代表真实准确率"},
         rows,
     )
     print(f"report={path}")

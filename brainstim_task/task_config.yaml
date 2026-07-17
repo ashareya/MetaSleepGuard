@@ -4,30 +4,30 @@ screen:
   height: 600
 default_task:
   - marker: eyes_open_adapt
-    prompt: 睁眼适应，保持放松
+    prompt: 睁眼适应,保持放松
     duration_sec: 60
   - marker: eyes_open_rest_1
-    prompt: 睁眼静息，请注视屏幕中央
+    prompt: 睁眼静息,请注视屏幕中央
     duration_sec: 120
   - marker: eyes_closed_rest_1
-    prompt: 闭眼静息，保持清醒放松
+    prompt: 闭眼静息,保持清醒放松
     duration_sec: 120
   - marker: eyes_open_rest_2
-    prompt: 睁眼静息，请减少眨眼
+    prompt: 睁眼静息,请减少眨眼
     duration_sec: 120
   - marker: eyes_closed_rest_2
-    prompt: 闭眼静息，保持身体稳定
+    prompt: 闭眼静息,保持身体稳定
     duration_sec: 120
   - marker: blink
     prompt: 请连续眨眼
     duration_sec: 15
   - marker: clench_teeth
-    prompt: 请轻咬牙，随后放松
+    prompt: 请轻咬牙,随后放松
     duration_sec: 15
   - marker: turn_head
     prompt: 请缓慢左右转头
     duration_sec: 15
   - marker: move_cable
-    prompt: 请轻移动电极线，制造接触伪迹
+    prompt: 请轻移动电极线,制造接触伪迹
     duration_sec: 15
 

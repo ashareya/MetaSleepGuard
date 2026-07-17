@@ -5,7 +5,7 @@
 3. Show the quality audit module and the artifact-quality indicators.
 4. Show OpenBCI file replay with a real OpenBCI GUI recording file:
 
-       python -m MetaSleepGuard.experiments.run_openbci_file_replay --file D:\data\openbci\record.csv
+       python -m MetaSleepGuard.experiments.run_openbci_file_replay --file .\data\openbci\record.csv
 
 5. Show Brainstim calibration dry run:
 

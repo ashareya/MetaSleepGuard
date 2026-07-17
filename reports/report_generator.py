@@ -8,9 +8,9 @@ from typing import Sequence
 
 
 LIMITATION_TEXT = (
-    "公开 Sleep-EDF/ISRUC 数据用于带专家标签的分期准确率验证；"
-    "博睿康 BDF/FIF 与 OpenBCI 数据用于真实文件兼容、实时链路、质量审计、可信拒识和报告生成验证；"
-    "无 PSG 或专家 30 秒标签时，不声称真实睡眠五分类准确率或临床准确率。"
+    "公开 Sleep-EDF/ISRUC 数据用于带专家标签的分期准确率验证;"
+    "博睿康 BDF/FIF 与 OpenBCI 数据用于真实文件兼容、实时链路、质量审计、可信拒识和报告生成验证;"
+    "无 PSG 或专家 30 秒标签时,不声称真实睡眠五分类准确率或临床准确率。"
 )
 
 

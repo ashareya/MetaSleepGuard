@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import mne
 import numpy as np
@@ -99,6 +100,9 @@ def main() -> None:
     worker.pre()
     worker_rows = worker.consume(X[0].T)
     report = SleepReportBuilder(run_dir / "report").build(worker_rows, {"source": "synthetic smoke"})
+    portable_report = dict(report)
+    for key in ("html", "markdown", "csv", "json"):
+        portable_report[key] = str(Path(report[key]).relative_to(run_dir))
     marker_csv = SleepCalibrationProtocol().run(
         run_dir / "brainstim_markers.csv", dry_run=True, use_psychopy=False, countdown_sec=0
     )
@@ -139,8 +143,8 @@ def main() -> None:
             "sleep_metrics": sleep_metrics,
             "integrity": integrity,
             "worker_rows": worker_rows,
-            "report": report,
-            "brainstim_marker_csv": str(marker_csv),
+            "report": portable_report,
+            "brainstim_marker_csv": marker_csv.name,
             "coverage_risk": risk,
         },
     }

@@ -158,7 +158,7 @@ def load_feature_dataset(pairs: list[tuple[Path, Path]]) -> dict:
         try:
             selected_channels = resolve_channels(list(raw.ch_names))
         except ValueError as exc:
-            skipped.append({"subject_id": subject_id, "reason": str(exc), "psg_path": str(psg_path)})
+            skipped.append({"subject_id": subject_id, "reason": str(exc), "psg_path": psg_path.name})
             continue
         annotations = mne.read_annotations(hypnogram_path)
         raw.set_annotations(annotations, emit_warning=False)
@@ -174,7 +174,7 @@ def load_feature_dataset(pairs: list[tuple[Path, Path]]) -> dict:
             verbose="ERROR",
         )
         if not len(events):
-            skipped.append({"subject_id": subject_id, "reason": "no valid 30-second sleep annotations", "psg_path": str(psg_path)})
+            skipped.append({"subject_id": subject_id, "reason": "no valid 30-second sleep annotations", "psg_path": psg_path.name})
             continue
         sfreq = float(raw.info["sfreq"])
         epochs = mne.Epochs(
@@ -206,8 +206,8 @@ def load_feature_dataset(pairs: list[tuple[Path, Path]]) -> dict:
                 "class_distribution": dict(counts),
                 "sampling_rate_hz": sfreq,
                 "channels": list(CHANNEL_TARGETS),
-                "psg_path": str(psg_path),
-                "hypnogram_path": str(hypnogram_path),
+                "psg_path": psg_path.name,
+                "hypnogram_path": hypnogram_path.name,
                 "psg_sha1": _sha1(psg_path),
                 "hypnogram_sha1": _sha1(hypnogram_path),
             }
@@ -224,8 +224,8 @@ def load_feature_dataset(pairs: list[tuple[Path, Path]]) -> dict:
                     "channels": "Fpz-Cz|Pz-Oz",
                     "sampling_rate_hz": sfreq,
                     "epoch_duration_sec": 30.0,
-                    "psg_path": str(psg_path),
-                    "hypnogram_path": str(hypnogram_path),
+                    "psg_path": psg_path.name,
+                    "hypnogram_path": hypnogram_path.name,
                 }
             )
         del data, epochs, raw
@@ -350,12 +350,12 @@ def _report_markdown(summary: dict, results: dict[str, dict]) -> str:
 
 ## 数据与方法
 
-- 数据：Sleep-EDF Expanded / Sleep Physionet age subset，真实 PSG 与专家 Hypnogram。
-- 被试：{summary['n_subjects']} 名，subjects {', '.join(summary['subject_ids'])}，每人 night 1。
-- 双导：Fpz-Cz、Pz-Oz。
-- 预处理：0.3–35 Hz，原始 {summary['sampling_rates_hz']} Hz，30 秒 Epoch；丢弃 Movement/Unknown。
-- 划分：{summary['split_method']}；同一被试不会同时出现在训练和测试集合。
-- 模型：RandomForest，传统时域/Hjorth/频带功率/相对功率/比值/谱熵特征。
+- 数据:Sleep-EDF Expanded / Sleep Physionet age subset,真实 PSG 与专家 Hypnogram。
+- 被试:{summary['n_subjects']} 名,subjects {', '.join(summary['subject_ids'])},每人 night 1。
+- 双导:Fpz-Cz、Pz-Oz。
+- 预处理:0.3–35 Hz,原始 {summary['sampling_rates_hz']} Hz,30 秒 Epoch;丢弃 Movement/Unknown。
+- 划分:{summary['split_method']};同一被试不会同时出现在训练和测试集合。
+- 模型:RandomForest,传统时域/Hjorth/频带功率/相对功率/比值/谱熵特征。
 
 ## 每名被试 Epoch 数
 
@@ -381,23 +381,23 @@ def _report_markdown(summary: dict, results: dict[str, dict]) -> str:
 
 ## 结论边界
 
-这些指标来自真实 Sleep-EDF 专家标签，可作为小样本公开数据基线证据。仅包含 {summary['n_subjects']} 名被试和每人一晚，不代表完整数据集性能。真实 OpenBCI 数据未用于准确率计算，仍只用于采集链路与质量守护验证。
+这些指标来自真实 Sleep-EDF 专家标签,可作为小样本公开数据基线证据。仅包含 {summary['n_subjects']} 名被试和每人一晚,不代表完整数据集性能。真实 OpenBCI 数据未用于准确率计算,仍只用于采集链路与质量守护验证。
 """
 
 
 def _readme(summary: dict, results: dict[str, dict]) -> str:
     return f"""# Sleep-EDF Real Baseline
 
-本目录是可提交的真实公开睡眠数据小样本基线，不是 synthetic smoke。
+本目录是可提交的真实公开睡眠数据小样本基线,不是 synthetic smoke。
 
-- 被试数：{summary['n_subjects']}
-- 总有效 Epoch：{summary['n_epochs_total']}
-- 双导：Fpz-Cz / Pz-Oz
-- 划分：{summary['split_method']}
-- 3-class：Accuracy {results['3class']['accuracy']:.4f}，Macro-F1 {results['3class']['macro_f1']:.4f}，Kappa {results['3class']['cohen_kappa']:.4f}
-- 5-class：Accuracy {results['5class']['accuracy']:.4f}，Macro-F1 {results['5class']['macro_f1']:.4f}，Kappa {results['5class']['cohen_kappa']:.4f}
+- 被试数:{summary['n_subjects']}
+- 总有效 Epoch:{summary['n_epochs_total']}
+- 双导:Fpz-Cz / Pz-Oz
+- 划分:{summary['split_method']}
+- 3-class:Accuracy {results['3class']['accuracy']:.4f},Macro-F1 {results['3class']['macro_f1']:.4f},Kappa {results['3class']['cohen_kappa']:.4f}
+- 5-class:Accuracy {results['5class']['accuracy']:.4f},Macro-F1 {results['5class']['macro_f1']:.4f},Kappa {results['5class']['cohen_kappa']:.4f}
 
-复现命令：
+复现命令:
 
 ```powershell
 .\\run.ps1 -Task public-sleep-real-baseline -MaxSubjects {summary['n_subjects']} -Python $py
@@ -408,11 +408,11 @@ def _readme(summary: dict, results: dict[str, dict]) -> str:
 def _limitations(summary: dict) -> str:
     return f"""# Data Limitations
 
-- 这是 {summary['n_subjects']} 名被试、每人一晚的真实 Sleep-EDF 子集基线，不是完整队列结论。
-- 指标采用 GroupKFold 被试级划分和 pooled out-of-fold 预测，不存在同一被试跨训练/测试集合。
-- 标准睡眠区间前后各保留最多 30 分钟清醒期，避免整日清醒记录主导类别分布。
-- 模型是传统 RandomForest 基线；低指标照实报告，没有挑选 Epoch 或被试美化结果。
-- OpenBCI 真实数据没有专家睡眠标签，未参与这些准确率指标。
+- 这是 {summary['n_subjects']} 名被试、每人一晚的真实 Sleep-EDF 子集基线,不是完整队列结论。
+- 指标采用 GroupKFold 被试级划分和 pooled out-of-fold 预测,不存在同一被试跨训练/测试集合。
+- 标准睡眠区间前后各保留最多 30 分钟清醒期,避免整日清醒记录主导类别分布。
+- 模型是传统 RandomForest 基线;低指标照实报告,没有挑选 Epoch 或被试美化结果。
+- OpenBCI 真实数据没有专家睡眠标签,未参与这些准确率指标。
 """
 
 

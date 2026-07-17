@@ -6,17 +6,17 @@ MetaSleep-Guard contains a dedicated `metabci_integration/` layer. The integrati
 
 ### Analysis environment
 
-Python：
+Python:
 
-    C:\Users\ZYH\anaconda3\envs\metabci\python.exe
+    <conda-root>\envs\metabci\python.exe
 
-Verified components：
+Verified components:
 
 - `metabci`
 - `metabci.brainflow`
 - `metabci.brainda`
 
-Responsibilities：
+Responsibilities:
 
 - OpenBCI acquisition-chain alignment
 - OpenBCI file replay
@@ -29,17 +29,17 @@ Responsibilities：
 
 ### Brainstim environment
 
-Python：
+Python:
 
-    C:\Users\ZYH\anaconda3\envs\metabci_stim\python.exe
+    <conda-root>\envs\metabci_stim\python.exe
 
-Verified components：
+Verified components:
 
 - `psychopy`
 - `metabci.brainstim`
 - Brainstim dry-run calibration
 
-Responsibilities：
+Responsibilities:
 
 - visual stimulus presentation
 - calibration paradigms
@@ -64,7 +64,7 @@ The Brainstim adapter is verified in the `metabci_stim` environment. The environ
 
 ## Project Extensions
 
-On top of MetaBCI base functions, the project adds：
+On top of MetaBCI base functions, the project adds:
 
 - sleep signal-quality auditing
 - 30-second window-integrity checks
@@ -75,16 +75,16 @@ On top of MetaBCI base functions, the project adds：
 
 ## Verification
 
-Analysis environment：
+Analysis environment:
 
-    $py = "C:\Users\ZYH\anaconda3\envs\metabci\python.exe"
+    $py = "<conda-root>\envs\metabci\python.exe"
 
     .\run.ps1 -Task status -Python $py
     .\run.ps1 -Task test -Python $py
     .\run.ps1 -Task metabci-integration-test -Python $py
 
-Brainstim environment：
+Brainstim environment:
 
-    $stimPy = "C:\Users\ZYH\anaconda3\envs\metabci_stim\python.exe"
+    $stimPy = "<conda-root>\envs\metabci_stim\python.exe"
 
     .\run.ps1 -Task brainstim -Synthetic -Python $stimPy

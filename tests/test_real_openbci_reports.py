@@ -102,6 +102,14 @@ def test_real_report_generation_smoke(tmp_path):
     sixty_markdown = (output / "sixty_min_continuous_recording" / "report.md").read_text(encoding="utf-8")
     assert "禁用通道异常活动" in sixty_markdown
     assert "不作为睡眠分期准确率依据" in sixty_markdown
+    ten_summary = result["ten_minute"]["summary"]
+    sixty_summary = result["sixty_minute"]["summary"]
+    assert Path(ten_summary["formal_data_file"]).name == ten_summary["formal_data_file"]
+    assert all(Path(path).name == path for path in sixty_summary["segment_files"])
+    assert all(not Path(path).is_absolute() for path in ten_summary["figures"].values())
+    assert all(not Path(path).is_absolute() for path in sixty_summary["figures"].values())
+    manifest = pd.read_csv(output / "ten_min_quality_calibration" / "copied_inputs_manifest.csv")
+    assert all(Path(path).name == path for path in manifest["source_path"])
 
 
 def _write_openbci(path: Path, timestamps) -> Path:
