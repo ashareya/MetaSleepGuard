@@ -7,6 +7,9 @@ outputs/
 logs/
 cache/
 tmp/
+build/
+*.egg-info/
+data/public_sleep/isruc_raw/official_download_manifest.json
 
 *.edf
 *.bdf

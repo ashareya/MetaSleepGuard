@@ -1,4 +1,5 @@
 from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 
@@ -12,6 +13,7 @@ from MetaSleepGuard.preprocessing.label_mapping import map_raw_stage
 from MetaSleepGuard.reports.submission_pack import _manifest_rows
 from MetaSleepGuard.reports.submission_pack import _real_items
 from MetaSleepGuard.experiments.download_sleep_edf_subset import _byte_ranges
+from MetaSleepGuard.experiments.download_isruc import download_resumable, remote_size
 from MetaSleepGuard.experiments.common import output_dir, project_root, repo_root
 from MetaSleepGuard.experiments.run_public_sleep_real_baseline import _limitations, _readme
 
@@ -175,3 +177,43 @@ def test_decision_evidence_working_points_and_artifacts():
     artifacts = run_artifact_injection()
     assert len(artifacts["rows"]) == 7
     assert 0.0 <= artifacts["detection_recall"] <= 1.0
+
+
+def test_isruc_remote_size_requires_valid_content_range():
+    class Response:
+        status_code = 206
+        headers = {"Content-Range": "bytes 0-0/12345"}
+        def __enter__(self): return self
+        def __exit__(self, *args): return None
+        def raise_for_status(self): return None
+
+    with patch("MetaSleepGuard.experiments.download_isruc.requests.get", return_value=Response()):
+        assert remote_size("https://example.invalid/1.rar") == 12345
+
+
+def test_isruc_resume_rejects_wrong_range_start(tmp_path):
+    archive = tmp_path / "1.rar"
+    archive.write_bytes(b"partial")
+
+    class Response:
+        status_code = 206
+        headers = {"Content-Range": "bytes 0-9/20"}
+        def __enter__(self): return self
+        def __exit__(self, *args): return None
+        def raise_for_status(self): return None
+
+    with patch("MetaSleepGuard.experiments.download_isruc.requests.get", return_value=Response()):
+        try:
+            download_resumable("https://example.invalid/1.rar", archive, expected_size=20)
+        except RuntimeError as exc:
+            assert "Unsafe resume response" in str(exc)
+        else:
+            raise AssertionError("unsafe Range response was accepted")
+    assert archive.read_bytes() == b"partial"
+
+
+def test_run_script_auto_selects_metabci_environments():
+    script = (repo_root() / "run.ps1").read_text(encoding="utf-8")
+    assert 'Find-CondaEnvironmentPython "metabci"' in script
+    assert 'Find-CondaEnvironmentPython "metabci_stim"' in script
+    assert '[string]$Python = "python"' not in script

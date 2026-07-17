@@ -43,13 +43,15 @@ Main functions：
     .\run.ps1 -Task metabci-integration-test -Python $py
     .\run.ps1 -Task brainstim -Synthetic -Python $stimPy
 
+`run.ps1` also detects these two environments automatically when `-Python` is omitted. An explicitly selected Python is rejected early if it cannot import the required MetaBCI module.
+
 ## Verified Results
 
 - Analysis environment imports `metabci`, `metabci.brainflow`, and `metabci.brainda`.
 - Brainstim environment imports `psychopy` and `metabci.brainstim`.
 - MetaBCI integration test passes.
 - Brainstim dry-run passes.
-- Automated test result: 71 passed, 0 failed.
+- Automated test result: 74 passed, 0 failed.
 
 ## Design Rationale
 

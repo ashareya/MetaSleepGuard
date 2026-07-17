@@ -20,11 +20,78 @@ param(
     [switch]$Synthetic,
     [int]$MaxSubjects = 15,
     [double]$DurationSec = 60,
-    [string]$Python = "python"
+    [string]$Python
 )
 
 $ErrorActionPreference = "Stop"
 $sourceRoot = $PSScriptRoot
+
+function Find-CondaEnvironmentPython {
+    param([string]$EnvironmentName)
+    $candidates = @()
+    if ($env:CONDA_PREFIX -and (Split-Path -Leaf $env:CONDA_PREFIX) -eq $EnvironmentName) {
+        $candidates += Join-Path $env:CONDA_PREFIX "python.exe"
+    }
+    if ($env:CONDA_EXE) {
+        $condaRoot = Split-Path -Parent (Split-Path -Parent $env:CONDA_EXE)
+        $candidates += Join-Path $condaRoot "envs\$EnvironmentName\python.exe"
+    }
+    if ($env:USERPROFILE) {
+        $candidates += Join-Path $env:USERPROFILE "anaconda3\envs\$EnvironmentName\python.exe"
+        $candidates += Join-Path $env:USERPROFILE "miniconda3\envs\$EnvironmentName\python.exe"
+        $candidates += Join-Path $env:USERPROFILE ".conda\envs\$EnvironmentName\python.exe"
+    }
+    foreach ($candidate in $candidates | Select-Object -Unique) {
+        if (Test-Path -LiteralPath $candidate) { return $candidate }
+    }
+    $conda = Get-Command conda -ErrorAction SilentlyContinue
+    if ($conda) {
+        try {
+            $environmentList = (& $conda.Source env list --json | ConvertFrom-Json).envs
+            foreach ($environment in $environmentList) {
+                if ((Split-Path -Leaf $environment) -eq $EnvironmentName) {
+                    $candidate = Join-Path $environment "python.exe"
+                    if (Test-Path -LiteralPath $candidate) { return $candidate }
+                }
+            }
+        }
+        catch { }
+    }
+    return $null
+}
+
+$analysisPython = Find-CondaEnvironmentPython "metabci"
+$stimPython = Find-CondaEnvironmentPython "metabci_stim"
+
+function Test-PythonImport {
+    param([string]$Executable, [string]$Module)
+    if (-not $Executable -or -not (Test-Path -LiteralPath $Executable)) { return $false }
+    & $Executable -c "import $Module" 2>$null
+    return $LASTEXITCODE -eq 0
+}
+
+if (-not $Python) {
+    if ($Task -eq "brainstim") {
+        if (Test-PythonImport $stimPython "metabci.brainstim") { $Python = $stimPython }
+        else { throw "Brainstim requires the metabci_stim environment. Pass -Python with a Python that imports metabci.brainstim." }
+    }
+    elseif (Test-PythonImport $analysisPython "metabci") {
+        $Python = $analysisPython
+    }
+    else {
+        throw "MetaSleep-Guard requires the metabci environment. Pass -Python, for example: .\run.ps1 -Task $Task -Python `"$analysisPython`""
+    }
+}
+elseif (-not (Test-Path -LiteralPath $Python)) {
+    throw "Python executable not found: $Python"
+}
+
+$requiredModule = if ($Task -eq "brainstim") { "metabci.brainstim" } else { "metabci" }
+if (-not (Test-PythonImport $Python $requiredModule)) {
+    throw "Selected Python cannot import $requiredModule`: $Python"
+}
+
+Write-Host "python=$Python"
 $packageParent = Split-Path -Parent $sourceRoot
 $previousPythonPath = $env:PYTHONPATH
 $sourcePaths = @($sourceRoot, $packageParent)

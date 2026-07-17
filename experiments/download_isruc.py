@@ -8,6 +8,8 @@ import json
 from pathlib import Path
 import shutil
 import subprocess
+import re
+import time
 
 import requests
 
@@ -32,28 +34,57 @@ def main() -> None:
     extracted.mkdir(parents=True, exist_ok=True)
     extractor = find_extractor(args.extractor)
     rows = []
+    failures = []
+    manifest = root / "official_download_manifest.json"
     for subject in range(1, args.subjects + 1):
         url = f"{BASE_URL}/{subject}.rar"
         archive = archives / f"{subject}.rar"
-        download_resumable(url, archive)
-        target = extracted / f"subject_{subject:03d}"
-        target.mkdir(parents=True, exist_ok=True)
-        extract_archive(extractor, archive, target)
-        rows.append(
-            {
+        row = {
                 "subject": subject,
                 "official_url": url,
                 "archive": str(archive),
-                "archive_size": archive.stat().st_size,
-                "archive_sha256": sha256(archive),
-                "extract_dir": str(target),
-                "files": sorted(str(path.relative_to(target)) for path in target.rglob("*") if path.is_file()),
+                "archive_size": archive.stat().st_size if archive.exists() else 0,
+                "status": "incomplete",
             }
-        )
-        print(f"isruc_subject={subject} archive_size={archive.stat().st_size}")
-    manifest = root / "official_download_manifest.json"
-    manifest.write_text(json.dumps(rows, ensure_ascii=False, indent=2), encoding="utf-8")
+        try:
+            expected_size = remote_size(url)
+            download_resumable(url, archive, expected_size=expected_size)
+            if archive.stat().st_size != expected_size:
+                raise RuntimeError(
+                    f"Incomplete ISRUC archive {archive.name}: "
+                    f"expected {expected_size} bytes, found {archive.stat().st_size}"
+                )
+            test_archive(extractor, archive)
+            target = extracted / f"subject_{subject:03d}"
+            target.mkdir(parents=True, exist_ok=True)
+            extract_archive(extractor, archive, target)
+            row.update(
+                {
+                    "archive_size": archive.stat().st_size,
+                    "expected_size": expected_size,
+                    "size_verified": True,
+                    "archive_test_passed": True,
+                    "archive_sha256": sha256(archive),
+                    "extract_dir": str(target),
+                    "files": sorted(str(path.relative_to(target)) for path in target.rglob("*") if path.is_file()),
+                    "status": "complete",
+                }
+            )
+            print(f"isruc_subject={subject} archive_size={archive.stat().st_size} status=complete")
+        except Exception as exc:
+            row.update(
+                {
+                    "archive_size": archive.stat().st_size if archive.exists() else 0,
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
+            )
+            failures.append(subject)
+            print(f"isruc_subject={subject} status=incomplete error={exc}")
+        rows.append(row)
+        manifest.write_text(json.dumps(rows, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"isruc_manifest={manifest}")
+    if failures:
+        raise SystemExit(f"ISRUC download incomplete for subjects: {failures}. Rerun the same command to resume safely.")
 
 
 def find_extractor(explicit: str | None = None) -> Path:
@@ -74,18 +105,73 @@ def find_extractor(explicit: str | None = None) -> Path:
     )
 
 
-def download_resumable(url: str, path: Path) -> None:
+def remote_size(url: str, attempts: int = 3) -> int:
+    """Return the authoritative object length using a one-byte range request."""
+
+    last_error: Exception | None = None
+    for attempt in range(1, attempts + 1):
+        try:
+            with requests.get(url, headers={"Range": "bytes=0-0"}, stream=True, timeout=(30, 120)) as response:
+                response.raise_for_status()
+                if response.status_code == 206:
+                    match = re.fullmatch(r"bytes\s+0-0/(\d+)", response.headers.get("Content-Range", ""))
+                    if not match:
+                        raise RuntimeError(
+                            f"Invalid Content-Range for {url}: {response.headers.get('Content-Range')!r}"
+                        )
+                    return int(match.group(1))
+                length = response.headers.get("Content-Length")
+                if response.status_code == 200 and length and int(length) > 1:
+                    return int(length)
+                raise RuntimeError(f"Official ISRUC server did not expose a reliable size for {url}")
+        except requests.RequestException as exc:
+            last_error = exc
+            if attempt < attempts:
+                time.sleep(min(2**attempt, 8))
+    raise RuntimeError(f"Official ISRUC server was unavailable after {attempts} attempts: {last_error}")
+
+
+def download_resumable(url: str, path: Path, expected_size: int | None = None) -> None:
     existing = path.stat().st_size if path.exists() else 0
+    if expected_size is None:
+        expected_size = remote_size(url)
+    if existing > expected_size:
+        raise RuntimeError(f"Local archive is larger than the official object: {path}")
+    if existing == expected_size:
+        return
     headers = {"Range": f"bytes={existing}-"} if existing else {}
     with requests.get(url, headers=headers, stream=True, timeout=(30, 120)) as response:
-        if existing and response.status_code == 200:
-            existing = 0
         response.raise_for_status()
-        mode = "ab" if existing and response.status_code == 206 else "wb"
+        if existing and response.status_code == 206:
+            content_range = response.headers.get("Content-Range", "")
+            match = re.fullmatch(r"bytes\s+(\d+)-(\d+)/(\d+)", content_range)
+            if not match or int(match.group(1)) != existing or int(match.group(3)) != expected_size:
+                raise RuntimeError(f"Unsafe resume response for {path.name}: {content_range!r}")
+            mode = "ab"
+        elif response.status_code == 200:
+            mode = "wb"
+        else:
+            raise RuntimeError(f"Unexpected HTTP {response.status_code} while downloading {url}")
         with path.open(mode) as handle:
             for chunk in response.iter_content(1024 * 1024):
                 if chunk:
                     handle.write(chunk)
+    actual_size = path.stat().st_size
+    if actual_size != expected_size:
+        raise RuntimeError(f"Incomplete download {path.name}: expected {expected_size}, found {actual_size}")
+
+
+def test_archive(extractor: Path, archive: Path) -> None:
+    """Ask the installed RAR extractor to verify CRCs without extracting."""
+
+    name = extractor.name.lower()
+    command = [str(extractor), "t", str(archive)]
+    if "unrar" not in name:
+        command.insert(2, "-y")
+    result = subprocess.run(command, capture_output=True, text=True)
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout).strip()
+        raise RuntimeError(f"ISRUC archive integrity test failed for {archive.name}: {detail}")
 
 
 def extract_archive(extractor: Path, archive: Path, target: Path) -> None:
