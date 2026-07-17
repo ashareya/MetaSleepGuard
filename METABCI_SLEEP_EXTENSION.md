@@ -80,7 +80,8 @@ from metabci_sleep.brainstim import SleepCalibrationProtocol
 `predict_proba_stream()`会跨调用保留同一受试者的因果历史，
 切换记录或重新开始实验时调用`reset_stream()`。
 
-ISRUC接口已经通过官方`.rec`结构、双评分标签、标准结构和范式测试；当前正式准确率证据来自30名
-Sleep-EDF被试。没有真实ISRUC文件时，不使用模拟数据声称跨数据集性能。
+ISRUC接口已通过旧式`.rec`与NEMAR BIDS结构、双评分标签、标准结构和范式测试。真实验证采用
+NEMAR `nm000111 v1.0.1`中的15名Subgroup-I被试，并将内部五折结果与双向跨数据集结果分开记录。
+当前ISRUC运行使用`sklearn_random_forest_fallback`，不得与XGBoost结果混合表述。
 
 只有提交 Pull Request 并被维护者合并后，才能称为 MetaBCI 官方新增功能。

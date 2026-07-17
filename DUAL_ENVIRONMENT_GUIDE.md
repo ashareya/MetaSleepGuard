@@ -51,7 +51,7 @@ Main functions：
 - Brainstim environment imports `psychopy` and `metabci.brainstim`.
 - MetaBCI integration test passes.
 - Brainstim dry-run passes.
-- Automated test result: 74 passed, 0 failed.
+- Automated test result: 77 passed, 0 failed.
 
 ## Design Rationale
 

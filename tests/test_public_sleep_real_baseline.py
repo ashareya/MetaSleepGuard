@@ -13,7 +13,13 @@ from MetaSleepGuard.preprocessing.label_mapping import map_raw_stage
 from MetaSleepGuard.reports.submission_pack import _manifest_rows
 from MetaSleepGuard.reports.submission_pack import _real_items
 from MetaSleepGuard.experiments.download_sleep_edf_subset import _byte_ranges
-from MetaSleepGuard.experiments.download_isruc import download_resumable, remote_size
+from MetaSleepGuard.experiments.download_isruc import (
+    download_resumable,
+    remote_size,
+    select_nemar_manifest_rows,
+    verify_nemar_checksum,
+)
+from MetaSleepGuard.datasets.public_sleep.loaders import find_isruc_records, parse_isruc_bids_events
 from MetaSleepGuard.experiments.common import output_dir, project_root, repo_root
 from MetaSleepGuard.experiments.run_public_sleep_real_baseline import _limitations, _readme
 
@@ -217,3 +223,50 @@ def test_run_script_auto_selects_metabci_environments():
     assert 'Find-CondaEnvironmentPython "metabci"' in script
     assert 'Find-CondaEnvironmentPython "metabci_stim"' in script
     assert '[string]$Python = "python"' not in script
+
+
+def test_nemar_manifest_selects_requested_subgroup_subjects():
+    def row(path, algorithm="git"):
+        return {"path": path, "size": 1, "checksum_algorithm": algorithm, "checksum": "x", "bytes_url": "https://x"}
+
+    rows = [
+        row("README.md"),
+        row("sub-I001/eeg/sub-I001_task-sleep_eeg.edf", "sha256"),
+        row("sub-I001/eeg/sub-I001_task-sleep_events.tsv"),
+        row("sub-I002/eeg/sub-I002_task-sleep_eeg.edf", "sha256"),
+        row("sub-II001/eeg/sub-II001_task-sleep_eeg.edf", "sha256"),
+    ]
+    selected = select_nemar_manifest_rows(rows, subjects=1)
+    paths = {item["path"] for item in selected}
+    assert "README.md" in paths
+    assert any(path.startswith("sub-I001/") for path in paths)
+    assert not any(path.startswith("sub-I002/") or path.startswith("sub-II") for path in paths)
+
+
+def test_nemar_sha256_and_git_blob_checksums(tmp_path):
+    import hashlib
+
+    path = tmp_path / "metadata.tsv"
+    path.write_bytes(b"abc")
+    verify_nemar_checksum(path, "sha256", hashlib.sha256(b"abc").hexdigest())
+    git_hash = hashlib.sha1(b"blob 3\0abc").hexdigest()
+    verify_nemar_checksum(path, "git", git_hash)
+
+
+def test_nemar_bids_events_and_pair_discovery(tmp_path):
+    eeg = tmp_path / "sub-I001" / "eeg" / "sub-I001_task-sleep_eeg.edf"
+    eeg.parent.mkdir(parents=True)
+    eeg.write_bytes(b"edf")
+    events = eeg.with_name("sub-I001_task-sleep_events.tsv")
+    events.write_text(
+        "onset\tduration\ttrial_type\texpert_2\n"
+        "0\t30\tSleep stage W\tSleep stage W\n"
+        "30\t60\tSleep stage 2\tSleep stage 3\n"
+        "90\t30\tSleep stage R\tSleep stage R\n",
+        encoding="utf-8",
+    )
+    pairs = find_isruc_records(tmp_path)
+    assert pairs == [(eeg, events)]
+    first, second = parse_isruc_bids_events(events)
+    assert first == ["W", "N2", "N2", "REM"]
+    assert second == ["W", "N3", "N3", "REM"]

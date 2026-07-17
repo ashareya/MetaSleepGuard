@@ -12,7 +12,12 @@ try:
 except ImportError as exc:  # pragma: no cover
     raise ImportError("ISRUCSleep requires MetaBCI Brainda and MNE") from exc
 
-from MetaSleepGuard.datasets.public_sleep.loaders import find_isruc_records, parse_isruc_labels
+from MetaSleepGuard.datasets.public_sleep.loaders import (
+    _default_isruc_channels,
+    find_isruc_records,
+    parse_isruc_bids_events,
+    parse_isruc_labels,
+)
 from .sleep_edf import STAGE_EVENT_IDS
 
 
@@ -66,7 +71,7 @@ class ISRUCSleep(BaseDataset):
     def _select_channels(self, available) -> list[str]:
         available = list(available)
         if self.requested_channels is None:
-            return available
+            return _default_isruc_channels(available)
         lookup = {_normalize_channel(name): name for name in available}
         selected = []
         missing = []
@@ -110,7 +115,10 @@ class ISRUCSleep(BaseDataset):
         for index, (edf, label_file) in enumerate(self._pairs[str(subject)]):
             raw = mne.io.read_raw_edf(edf, preload=True, verbose="ERROR")
             raw.pick(self._select_channels(raw.ch_names))
-            labels = parse_isruc_labels(label_file)
+            if label_file.name.lower().endswith("_events.tsv"):
+                labels, _ = parse_isruc_bids_events(label_file)
+            else:
+                labels = parse_isruc_labels(label_file)
             max_epochs = min(len(labels), int(raw.n_times // round(raw.info["sfreq"] * self.epoch_sec)))
             onsets, descriptions = [], []
             for epoch_index, stage in enumerate(labels[:max_epochs]):

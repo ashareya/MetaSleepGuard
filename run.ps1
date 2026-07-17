@@ -3,7 +3,7 @@ param(
         "status", "prepare", "train", "evaluate", "cross", "audit", "replay", "realtime", "brainstim",
         "real-openbci-report", "openbci-file-replay", "submission-pack", "metrics-export", "demo-assets",
         "public-sleep-baseline", "public-sleep-eval", "cross-dataset-eval", "public-sleep-download", "public-sleep-real-baseline",
-        "isruc-download", "decision-evidence",
+        "isruc-download", "isruc-validation", "decision-evidence",
         "metabci-integration-test", "metabci-sleep-smoke", "report", "test"
     )]
     [string]$Task = "test",
@@ -196,6 +196,12 @@ try {
         "isruc-download" {
             $args = @("-m", "MetaSleepGuard.experiments.download_isruc", "--subjects", $MaxSubjects)
             if ($DataRoot) { $args += @("--data-root", $DataRoot) }
+            & $Python @args
+        }
+        "isruc-validation" {
+            $args = @("-m", "MetaSleepGuard.experiments.run_isruc_validation", "--subjects", $MaxSubjects)
+            if ($IsrucRoot) { $args += @("--isruc-root", $IsrucRoot) }
+            if ($SleepEdfRoot) { $args += @("--sleep-edf-root", $SleepEdfRoot) }
             & $Python @args
         }
         "decision-evidence" {

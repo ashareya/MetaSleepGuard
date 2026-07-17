@@ -51,8 +51,16 @@ def cross_dataset_evaluate(
             "calibration": calibration,
             "train_synthetic_demo": bool(train_data.metadata.get("synthetic_demo")),
             "test_synthetic_demo": bool(test_data.metadata.get("synthetic_demo")),
+            "train_subject_ids": sorted({record.subject_id for record in train_records}),
+            "test_subject_ids": sorted({record.subject_id for record in test_records}),
         }
     )
+    # Dataset names differ, but retain an explicit composite-ID leakage proof in
+    # every result rather than relying on that convention implicitly.
+    train_keys = {(record.dataset, record.subject_id) for record in train_records}
+    test_keys = {(record.dataset, record.subject_id) for record in test_records}
+    metrics["train_test_subject_overlap"] = [list(key) for key in sorted(train_keys & test_keys)]
+    metrics["train_test_subject_overlap_count"] = len(train_keys & test_keys)
     bundle = make_model_bundle(model, model_kind, train_data)
     bundle["calibration"] = calibration
     return {"bundle": bundle, "metrics": metrics}

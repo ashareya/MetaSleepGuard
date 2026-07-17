@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
+import csv
 import hashlib
 import logging
 import re
@@ -122,6 +123,11 @@ def find_isruc_records(root: str | Path, scorer: int = 1) -> list[tuple[Path, Pa
     edfs = sorted({*root.rglob("*.edf"), *root.rglob("*.rec")})
     records: list[tuple[Path, Path | None]] = []
     for edf in edfs:
+        bids_name = re.sub(r"_eeg\.(?:edf|rec)$", "_events.tsv", edf.name, flags=re.IGNORECASE)
+        bids_events = edf.with_name(bids_name)
+        if bids_name != edf.name and bids_events.exists():
+            records.append((edf, bids_events))
+            continue
         label_candidates: list[Path] = []
         for suffix in ("*.txt", "*.csv", "*.tsv", "*.xls", "*.xlsx"):
             label_candidates.extend(edf.parent.glob(suffix))
@@ -151,14 +157,20 @@ def load_isruc_sleep(
             continue
         included_subjects.add(subject_id)
         LOGGER.info("Loading ISRUC EDF=%s labels=%s", edf_path, label_path)
-        raw = mne.io.read_raw_edf(edf_path, preload=True, verbose="ERROR")
-        if channels:
-            available = [ch for ch in channels if ch in raw.ch_names]
-            if available:
-                raw.pick_channels(available, ordered=True)
-        labels = parse_isruc_labels(label_path) if label_path else []
+        raw = mne.io.read_raw_edf(edf_path, preload=False, verbose="ERROR")
+        selected_channels = list(channels) if channels else _default_isruc_channels(raw.ch_names)
+        available = _match_channel_names(selected_channels, raw.ch_names)
+        if len(available) < len(selected_channels):
+            raise ValueError(f"ISRUC channels not found: requested={selected_channels}, available={raw.ch_names}")
+        raw.pick(available)
+        raw.load_data()
         scorer2_path = scorer2_lookup.get(edf_path.resolve())
-        scorer2_labels = parse_isruc_labels(scorer2_path) if scorer2_path else []
+        if label_path and label_path.name.lower().endswith("_events.tsv"):
+            labels, scorer2_labels = parse_isruc_bids_events(label_path)
+            scorer2_path = label_path if scorer2_labels else None
+        else:
+            labels = parse_isruc_labels(label_path) if label_path else []
+            scorer2_labels = parse_isruc_labels(scorer2_path) if scorer2_path else []
         agreement = _label_agreement(labels, scorer2_labels)
         records.append(
             SleepRecord(
@@ -176,6 +188,7 @@ def load_isruc_sleep(
                     "scorer_agreement": agreement,
                     "edf_sha256": _sha256(edf_path),
                     "label_sha256": _sha256(label_path) if label_path else "",
+                    "distribution": "NEMAR nm000111 v1.0.1" if label_path and label_path.name.endswith("_events.tsv") else "original",
                 },
             )
         )
@@ -206,6 +219,55 @@ def parse_isruc_labels(path: str | Path) -> list[str]:
             if stage is not None:
                 labels.append(stage)
     return labels
+
+
+def parse_isruc_bids_events(path: str | Path) -> tuple[list[str], list[str]]:
+    """Expand NEMAR BIDS sleep-stage events into consecutive 30-second labels."""
+
+    path = Path(path)
+    with path.open("r", encoding="utf-8-sig", errors="ignore", newline="") as handle:
+        rows = list(csv.DictReader(handle, delimiter="\t"))
+    if not rows:
+        return [], []
+    columns = list(rows[0])
+    primary = next(
+        (name for name in ("trial_type", "description", "sleep_stage", "stage", "value") if name in columns),
+        None,
+    )
+    if primary is None:
+        raise ValueError(f"NEMAR events file has no sleep-stage column: {path}")
+    scorer2 = next(
+        (
+            name
+            for name in columns
+            if name != primary and any(token in name.lower() for token in ("scorer2", "scorer_2", "expert2", "expert_2"))
+        ),
+        None,
+    )
+    max_epoch = 0
+    expanded: dict[int, str] = {}
+    expanded_second: dict[int, str] = {}
+    for sequential_index, row in enumerate(rows):
+        try:
+            onset = float(row.get("onset", sequential_index * 30.0))
+        except (TypeError, ValueError):
+            onset = sequential_index * 30.0
+        try:
+            duration = float(row.get("duration", 30.0))
+        except (TypeError, ValueError):
+            duration = 30.0
+        start = max(0, int(round(onset / 30.0)))
+        count = max(1, int(round(duration / 30.0)))
+        first_stage = map_raw_stage(str(row.get(primary, "UNKNOWN")))
+        second_stage = map_raw_stage(str(row.get(scorer2, "UNKNOWN"))) if scorer2 else "UNKNOWN"
+        for epoch in range(start, start + count):
+            expanded[epoch] = first_stage
+            if scorer2:
+                expanded_second[epoch] = second_stage
+        max_epoch = max(max_epoch, start + count)
+    first = [expanded.get(index, "UNKNOWN") for index in range(max_epoch)]
+    second = [expanded_second.get(index, "UNKNOWN") for index in range(max_epoch)] if scorer2 else []
+    return first, second
 
 
 def generate_synthetic_public_records(
@@ -347,6 +409,51 @@ def _label_agreement(first: Sequence[str], second: Sequence[str]) -> dict:
         "n_compared": int(np.sum(valid)),
         "agreement": float(np.mean(a[valid] == b[valid])) if np.any(valid) else None,
     }
+
+
+def _default_isruc_channels(available: Sequence[str]) -> list[str]:
+    """Choose two real central EEG derivations without inventing channels."""
+
+    names = list(available)
+    normalized = {_normalize_channel_name(name): name for name in names}
+    preferred_pairs = [
+        ("c3a2", "c4a1"),
+        ("c3m2", "c4m1"),
+        ("c3", "c4"),
+        ("f3a2", "f4a1"),
+    ]
+    for pair in preferred_pairs:
+        matches = []
+        for requested in pair:
+            match = next((actual for key, actual in normalized.items() if requested == key or requested in key), None)
+            if match:
+                matches.append(match)
+        if len(matches) == 2 and matches[0] != matches[1]:
+            return matches
+    eeg_like = [name for name in names if any(token in _normalize_channel_name(name) for token in ("eeg", "c3", "c4"))]
+    if len(eeg_like) >= 2:
+        return eeg_like[:2]
+    if len(names) >= 2:
+        return names[:2]
+    raise ValueError(f"ISRUC recording has fewer than two channels: {names}")
+
+
+def _match_channel_names(requested: Sequence[str], available: Sequence[str]) -> list[str]:
+    lookup = {_normalize_channel_name(name): name for name in available}
+    matches = []
+    for name in requested:
+        key = _normalize_channel_name(name)
+        match = lookup.get(key)
+        if match is None:
+            candidates = [actual for actual_key, actual in lookup.items() if key in actual_key or actual_key in key]
+            match = candidates[0] if len(candidates) == 1 else None
+        if match is not None:
+            matches.append(match)
+    return matches
+
+
+def _normalize_channel_name(name: str) -> str:
+    return "".join(character.lower() for character in str(name) if character.isalnum())
 
 
 def _sha256(path: Path) -> str:
